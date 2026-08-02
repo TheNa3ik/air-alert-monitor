@@ -1,5 +1,7 @@
 package io.github.thena3ik.airalertmonitor.service;
 
+import io.github.thena3ik.airalertmonitor.dto.AlertEventResponse;
+import io.github.thena3ik.airalertmonitor.dto.PageResponse;
 import io.github.thena3ik.airalertmonitor.dto.RegionStatusResponse;
 import io.github.thena3ik.airalertmonitor.entity.AlertEvent;
 import io.github.thena3ik.airalertmonitor.entity.Region;
@@ -7,6 +9,8 @@ import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
 import io.github.thena3ik.airalertmonitor.repository.AlertEventRepository;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,6 +39,27 @@ public class RegionQueryService {
                 .orElseThrow(() -> new RegionNotFoundException("Region not found with id: " + id));
 
         return toStatusResponse(region);
+    }
+
+    public PageResponse<AlertEventResponse> getRegionHistory(Long id, Pageable pageable) {
+        Region region = regionRepository.findById(id)
+                .orElseThrow(() -> new RegionNotFoundException("Region not found with id: " + id));
+
+        Page<AlertEvent> page = alertEventRepository.findByRegion(region, pageable);
+
+        List<AlertEventResponse> content = page.getContent()
+                .stream()
+                .map(event -> AlertEventResponse.from(event.getStartedAt(), event.getEndedAt(), event.getSource()))
+                .toList();
+
+        return new PageResponse<>(
+                content,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 
     private RegionStatusResponse toStatusResponse(Region region) {
