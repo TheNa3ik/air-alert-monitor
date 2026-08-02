@@ -19,11 +19,14 @@ public class RegionQueryService {
     private final AlertEventRepository alertEventRepository;
     private final RegionRepository regionRepository;
 
-    public List<RegionStatusResponse> getAllRegionStatuses() {
-        List<Region> regions = regionRepository.findAll();
+    public List<RegionStatusResponse> getAllRegionStatuses(List<Long> ids, Boolean activeFilter) {
+        List<Region> regions = (ids != null && !ids.isEmpty())
+                ? regionRepository.findAllById(ids)
+                : regionRepository.findAll();
 
         return regions.stream()
                 .map(this::toStatusResponse)
+                .filter(status -> activeFilter == null || status.alertActive() == activeFilter)
                 .toList();
     }
 
