@@ -1,0 +1,1 @@
+CREATE INDEX idx_alert_event_started_at ON alert_event(started_at);

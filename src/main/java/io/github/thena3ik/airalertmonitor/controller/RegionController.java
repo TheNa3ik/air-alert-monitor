@@ -2,12 +2,14 @@ package io.github.thena3ik.airalertmonitor.controller;
 
 import io.github.thena3ik.airalertmonitor.dto.AlertEventResponse;
 import io.github.thena3ik.airalertmonitor.dto.PageResponse;
+import io.github.thena3ik.airalertmonitor.dto.RegionAlertStatsResponse;
 import io.github.thena3ik.airalertmonitor.dto.RegionStatusResponse;
 import io.github.thena3ik.airalertmonitor.service.RegionQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -32,5 +34,25 @@ public class RegionController {
     @GetMapping("/{id}/history")
     public PageResponse<AlertEventResponse> getRegionHistory(@PathVariable Long id, Pageable pageable) {
         return regionQueryService.getRegionHistory(id, pageable);
+    }
+
+    @GetMapping("/stats")
+    public List<RegionAlertStatsResponse> getAllRegionsStats(
+            @RequestParam(required = false) List<Long> ids,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to,
+            @RequestParam(defaultValue = "UTC") String tz) {
+        return regionQueryService.getAllAlertRegionsStats(ids, period, from, to, tz);
+    }
+
+    @GetMapping("/{id}/stats")
+    public RegionAlertStatsResponse getRegionStats(
+            @PathVariable Long id,
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to,
+            @RequestParam(defaultValue = "UTC") String tz) {
+        return regionQueryService.getAlertRegionStats(id, period, from, to, tz);
     }
 }
