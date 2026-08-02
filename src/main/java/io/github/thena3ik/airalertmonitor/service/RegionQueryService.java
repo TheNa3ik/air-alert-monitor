@@ -69,11 +69,11 @@ public class RegionQueryService {
         );
     }
 
-    public List<RegionAlertStatsResponse> getAllAlertRegionsStats(List<Long> regionIds,
-                                                                  String period,
-                                                                  LocalDateTime fromDate,
-                                                                  LocalDateTime toDate,
-                                                                  String timezone) {
+    public List<RegionAlertStatsResponse> getAllAlertRegionStats(List<Long> regionIds,
+                                                                 String period,
+                                                                 LocalDateTime fromDate,
+                                                                 LocalDateTime toDate,
+                                                                 String timezone) {
 
         List<Region> regions = (regionIds != null && !regionIds.isEmpty())
                 ? regionRepository.findAllById(regionIds)

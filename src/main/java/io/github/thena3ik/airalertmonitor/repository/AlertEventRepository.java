@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface AlertEventRepository extends JpaRepository<AlertEvent, Long> {
     Optional<AlertEvent> findByRegionAndEndedAtIsNull(Region region);
     Page<AlertEvent> findByRegion(Region region, Pageable pageable);
-    List<AlertEvent> findByRegionOrderByStartedAtDesc(Region region);
     List<AlertEvent> findByRegionAndStartedAtBetween(Region region, Instant from, Instant to);
     List<AlertEvent> findByRegionInAndStartedAtBetween(List<Region> regions, Instant from, Instant to);
 }

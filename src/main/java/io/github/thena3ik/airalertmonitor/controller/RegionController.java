@@ -37,13 +37,13 @@ public class RegionController {
     }
 
     @GetMapping("/stats")
-    public List<RegionAlertStatsResponse> getAllRegionsStats(
+    public List<RegionAlertStatsResponse> getAllRegionStats(
             @RequestParam(required = false) List<Long> ids,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) LocalDateTime from,
             @RequestParam(required = false) LocalDateTime to,
             @RequestParam(defaultValue = "UTC") String tz) {
-        return regionQueryService.getAllAlertRegionsStats(ids, period, from, to, tz);
+        return regionQueryService.getAllAlertRegionStats(ids, period, from, to, tz);
     }
 
     @GetMapping("/{id}/stats")
