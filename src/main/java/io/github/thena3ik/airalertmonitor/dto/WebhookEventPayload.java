@@ -8,5 +8,5 @@ public record WebhookEventPayload(
         EventType eventType,
         Long regionId,
         String regionName,
-        Instant occuredAt) {
+        Instant occurredAt) {
 }

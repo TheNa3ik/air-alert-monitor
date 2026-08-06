@@ -8,7 +8,9 @@ import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.repository.WebhookSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -17,11 +19,36 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WebhookService {
 
     private final WebhookUrlValidator webhookUrlValidator;
     private final RegionRepository regionRepository;
     private final WebhookSubscriptionRepository webhookSubscriptionRepository;
+
+    private static final int MAX_CONSECUTIVE_FAILURES = 5;
+
+    @Transactional
+    public void recordSuccess(Long subscriptionId) {
+        webhookSubscriptionRepository.findById(subscriptionId).ifPresent(sub -> {
+            sub.setConsecutiveFailures(0);
+            webhookSubscriptionRepository.save(sub);
+        });
+    }
+
+    @Transactional
+    public void recordFailure(Long subscriptionId) {
+        webhookSubscriptionRepository.findById(subscriptionId).ifPresent(sub -> {
+            sub.setConsecutiveFailures(sub.getConsecutiveFailures() + 1);
+
+            if (sub.getConsecutiveFailures() >= MAX_CONSECUTIVE_FAILURES) {
+                sub.setActive(false);
+                log.warn("Subscription {} deactivated after {} consecutive failures", subscriptionId, MAX_CONSECUTIVE_FAILURES);
+            }
+
+            webhookSubscriptionRepository.save(sub);
+        });
+    }
 
     public WebhookSubscriptionResponse createWebhook(CreateWebhookRequest request) {
             webhookUrlValidator.validate(request.url());

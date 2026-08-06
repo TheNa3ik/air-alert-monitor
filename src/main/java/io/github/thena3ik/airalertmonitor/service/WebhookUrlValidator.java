@@ -17,7 +17,7 @@ public class WebhookUrlValidator {
             throw new UnsafeWebhookUrlException("Malformed URL: " + url);
         }
 
-        if (!"https.".equalsIgnoreCase(uri.getScheme())) {
+        if (!"https".equalsIgnoreCase(uri.getScheme())) {
             throw new UnsafeWebhookUrlException("Webhook URL must use HTTPS");
         }
 

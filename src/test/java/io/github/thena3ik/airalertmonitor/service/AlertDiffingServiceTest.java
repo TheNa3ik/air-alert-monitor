@@ -2,10 +2,15 @@ package io.github.thena3ik.airalertmonitor.service;
 
 import io.github.thena3ik.airalertmonitor.dto.RegionState;
 import io.github.thena3ik.airalertmonitor.dto.UbillingAlertsResponse;
+import io.github.thena3ik.airalertmonitor.dto.WebhookEventPayload;
 import io.github.thena3ik.airalertmonitor.entity.AlertEvent;
 import io.github.thena3ik.airalertmonitor.entity.Region;
+import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
+import io.github.thena3ik.airalertmonitor.notification.WebhookDeliveryClient;
 import io.github.thena3ik.airalertmonitor.repository.AlertEventRepository;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
+import io.github.thena3ik.airalertmonitor.repository.WebhookSubscriptionRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -14,11 +19,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,8 +37,22 @@ class AlertDiffingServiceTest {
     @Mock
     private AlertEventRepository alertEventRepository;
 
+    @Mock
+    private WebhookSubscriptionRepository webhookSubscriptionRepository;
+
+    @Mock
+    private WebhookDeliveryClient webhookDeliveryClient;
+
     @InjectMocks
     private AlertDiffingService alertDiffingService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(alertEventRepository.save(any(AlertEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(webhookSubscriptionRepository.findByRegionsContainingAndActiveTrue(any()))
+                .thenReturn(List.of());
+    }
 
     private UbillingAlertsResponse responseWith(String regionName, boolean alertNow) {
         return new UbillingAlertsResponse(
@@ -99,5 +120,31 @@ class AlertDiffingServiceTest {
 
         verify(alertEventRepository, never()).save(any(AlertEvent.class));
         verify(alertEventRepository, never()).findByRegionAndEndedAtIsNull(any());
+    }
+
+    @Test
+    void triggersWebhookDelivery_whenAlertStarts() {
+        Region region = new Region(1L, "Донецька область");
+        WebhookSubscription subscription = new WebhookSubscription("https://example.com/hook", "secret");
+
+        when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
+        when(alertEventRepository.findByRegionAndEndedAtIsNull(region)).thenReturn(Optional.empty());
+        when(webhookSubscriptionRepository.findByRegionsContainingAndActiveTrue(region))
+                .thenReturn(List.of(subscription));
+
+        alertDiffingService.processPoll(responseWith("Донецька область", true));
+
+        verify(webhookDeliveryClient, times(1)).deliver(eq(subscription), any(WebhookEventPayload.class));
+    }
+
+    @Test
+    void doesNotTriggerWebhookDelivery_whenNoSubscribersForRegion() {
+        Region region = new Region(1L, "Донецька область");
+        when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
+        when(alertEventRepository.findByRegionAndEndedAtIsNull(region)).thenReturn(Optional.empty());
+
+        alertDiffingService.processPoll(responseWith("Донецька область", true));
+
+        verify(webhookDeliveryClient, never()).deliver(any(), any());
     }
 }

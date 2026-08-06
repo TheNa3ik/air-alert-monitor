@@ -2,7 +2,7 @@ package io.github.thena3ik.airalertmonitor.notification;
 
 import io.github.thena3ik.airalertmonitor.dto.WebhookEventPayload;
 import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
-import io.github.thena3ik.airalertmonitor.exception.WebhookDeliveryException;
+import io.github.thena3ik.airalertmonitor.service.WebhookService;
 import io.github.thena3ik.airalertmonitor.service.WebhookUrlValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ public class WebhookDeliveryClient {
     private final WebhookSigner webhookSigner;
     private final WebhookUrlValidator webhookUrlValidator;
     private final JsonMapper jsonMapper;
+    private final WebhookService webhookService;
 
     @Async
     public void deliver(WebhookSubscription subscription, WebhookEventPayload payload) {
@@ -46,10 +47,11 @@ public class WebhookDeliveryClient {
                     .toBodilessEntity();
 
             log.info("Webhook delivered successfully to subscription {}", subscription.getId());
+            webhookService.recordSuccess(subscription.getId());
 
         } catch (Exception exc) {
             log.warn("Webhook delivery failed for subscription {}: {}", subscription.getId(), exc.getMessage());
-            throw new WebhookDeliveryException("Failed to deliver webhook to subscription " + subscription.getId(), exc);
+            webhookService.recordFailure(subscription.getId());
         }
     }
 
