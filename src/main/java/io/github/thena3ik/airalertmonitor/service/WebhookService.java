@@ -7,7 +7,7 @@ import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
 import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.repository.WebhookSubscriptionRepository;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WebhookService {
 
     private final WebhookUrlValidator webhookUrlValidator;
