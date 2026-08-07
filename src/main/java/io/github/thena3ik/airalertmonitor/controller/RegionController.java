@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/regions")
+@RequestMapping("/api/v1/regions")
 @RequiredArgsConstructor
 public class RegionController {
 
