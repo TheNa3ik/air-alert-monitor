@@ -35,8 +35,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler()
+    @ExceptionHandler
     public ResponseEntity<ErrorResponse> handleUnsafeWebhookUrlException(UnsafeWebhookUrlException exc) {
+        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), exc.getMessage(), Instant.now());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleWebhookNotFoundException(WebhookNotFoundException exc) {
         ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), exc.getMessage(), Instant.now());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }

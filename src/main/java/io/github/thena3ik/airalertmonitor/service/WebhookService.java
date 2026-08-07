@@ -2,9 +2,11 @@ package io.github.thena3ik.airalertmonitor.service;
 
 import io.github.thena3ik.airalertmonitor.dto.CreateWebhookRequest;
 import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionResponse;
+import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionSummaryResponse;
 import io.github.thena3ik.airalertmonitor.entity.Region;
 import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
 import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
+import io.github.thena3ik.airalertmonitor.exception.WebhookNotFoundException;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.repository.WebhookSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +52,45 @@ public class WebhookService {
         });
     }
 
+    public WebhookSubscriptionSummaryResponse getWebhook(Long id) {
+        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
+                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+        return toSummary(subscription);
+    }
+
+    public WebhookSubscriptionSummaryResponse updateRegions(Long id, List<Long> regionIds) {
+        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
+                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+
+        List<Region> regions = regionRepository.findAllById(regionIds);
+        if (regions.isEmpty()) {
+            throw new RegionNotFoundException("No valid regions found for provided ids");
+        }
+
+        subscription.setRegions(new HashSet<>(regions));
+        webhookSubscriptionRepository.save(subscription);
+
+        return toSummary(subscription);
+    }
+
+    public WebhookSubscriptionSummaryResponse reactivateWebhook(Long id) {
+        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
+                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+
+        subscription.setActive(true);
+        subscription.setConsecutiveFailures(0);
+        webhookSubscriptionRepository.save(subscription);
+
+        return toSummary(subscription);
+    }
+
+    public void deleteWebhook(Long id) {
+        if (!webhookSubscriptionRepository.existsById(id)) {
+            throw new WebhookNotFoundException("Webhook not found: " + id);
+        }
+        webhookSubscriptionRepository.deleteById(id);
+    }
+
     public WebhookSubscriptionResponse createWebhook(CreateWebhookRequest request) {
             webhookUrlValidator.validate(request.url());
 
@@ -73,14 +114,27 @@ public class WebhookService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    private List<Long> extractRegionIds(WebhookSubscription subscription) {
+        return subscription.getRegions().stream().map(Region::getId).toList();
+    }
+
     private WebhookSubscriptionResponse toResponse(WebhookSubscription subscription) {
-        List<Long> regionIds = subscription.getRegions().stream().map(Region::getId).toList();
         return new WebhookSubscriptionResponse(
                 subscription.getId(),
                 subscription.getUrl(),
                 subscription.getSecret(),
                 subscription.isActive(),
-                regionIds,
+                extractRegionIds(subscription),
+                subscription.getCreatedAt());
+    }
+
+    private WebhookSubscriptionSummaryResponse toSummary(WebhookSubscription subscription) {
+        return new WebhookSubscriptionSummaryResponse(
+                subscription.getId(),
+                subscription.getUrl(),
+                subscription.isActive(),
+                subscription.getConsecutiveFailures(),
+                extractRegionIds(subscription),
                 subscription.getCreatedAt());
     }
 }
