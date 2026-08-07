@@ -12,6 +12,7 @@ import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.repository.WebhookSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,8 +57,7 @@ public class WebhookSubscriptionService {
     }
 
     public WebhookSubscriptionSummaryResponse getWebhook(Long id, String authorizationHeader) {
-        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
-                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+        WebhookSubscription subscription = getSubscriptionOrThrow(id);
 
         verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
 
@@ -65,8 +65,7 @@ public class WebhookSubscriptionService {
     }
 
     public WebhookSubscriptionSummaryResponse updateRegions(Long id, List<Long> regionIds, String authorizationHeader) {
-        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
-                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+        WebhookSubscription subscription = getSubscriptionOrThrow(id);
 
         verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
 
@@ -82,8 +81,7 @@ public class WebhookSubscriptionService {
     }
 
     public WebhookSubscriptionSummaryResponse reactivateWebhook(Long id, String authorizationHeader) {
-        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
-                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+        WebhookSubscription subscription = getSubscriptionOrThrow(id);
 
         verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
 
@@ -95,8 +93,7 @@ public class WebhookSubscriptionService {
     }
 
     public void deleteWebhook(Long id, String authorizationHeader) {
-        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
-                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+        WebhookSubscription subscription = getSubscriptionOrThrow(id);
 
         verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
 
@@ -119,6 +116,11 @@ public class WebhookSubscriptionService {
         webhookSubscriptionRepository.save(subscription);
 
         return toResponse(subscription);
+    }
+
+    private WebhookSubscription getSubscriptionOrThrow(Long id) {
+        return webhookSubscriptionRepository.findById(id)
+                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
     }
 
     private String generateSecureToken() {
