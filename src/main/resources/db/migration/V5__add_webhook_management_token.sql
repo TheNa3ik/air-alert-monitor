@@ -1,0 +1,1 @@
+ALTER TABLE webhook_subscription ADD COLUMN management_token VARCHAR(255) NOT NULL UNIQUE;

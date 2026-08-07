@@ -7,6 +7,7 @@ public record WebhookSubscriptionResponse(
         Long id,
         String url,
         String secret,
+        String managementToken,
         boolean active,
         List<Long> regionIds,
         Instant createdAt) {

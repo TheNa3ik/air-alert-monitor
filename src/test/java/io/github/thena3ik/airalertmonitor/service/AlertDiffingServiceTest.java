@@ -125,7 +125,7 @@ class AlertDiffingServiceTest {
     @Test
     void triggersWebhookDelivery_whenAlertStarts() {
         Region region = new Region(1L, "Донецька область");
-        WebhookSubscription subscription = new WebhookSubscription("https://example.com/hook", "secret");
+        WebhookSubscription subscription = new WebhookSubscription("https://example.com/hook", "secret", "token");
 
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
         when(alertEventRepository.findByRegionAndEndedAtIsNull(region)).thenReturn(Optional.empty());

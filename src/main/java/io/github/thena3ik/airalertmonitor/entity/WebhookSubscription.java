@@ -34,6 +34,9 @@ public class WebhookSubscription {
     @Column(nullable = false, unique = true)
     private String secret;
 
+    @Column(nullable = false, unique = true)
+    private String managementToken;
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -43,9 +46,10 @@ public class WebhookSubscription {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    public WebhookSubscription(String url, String secret) {
+    public WebhookSubscription(String url, String secret, String managementToken) {
         this.url = url;
         this.secret = secret;
+        this.managementToken = managementToken;
         this.createdAt = Instant.now();
     }
 }

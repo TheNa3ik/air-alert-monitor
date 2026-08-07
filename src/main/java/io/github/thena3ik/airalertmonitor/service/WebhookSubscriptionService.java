@@ -6,6 +6,7 @@ import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionSummary
 import io.github.thena3ik.airalertmonitor.entity.Region;
 import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
 import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
+import io.github.thena3ik.airalertmonitor.exception.UnauthorizedWebhookAccessException;
 import io.github.thena3ik.airalertmonitor.exception.WebhookNotFoundException;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.repository.WebhookSubscriptionRepository;
@@ -14,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashSet;
@@ -52,15 +55,20 @@ public class WebhookSubscriptionService {
         });
     }
 
-    public WebhookSubscriptionSummaryResponse getWebhook(Long id) {
+    public WebhookSubscriptionSummaryResponse getWebhook(Long id, String authorizationHeader) {
         WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
                 .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+
+        verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
+
         return toSummary(subscription);
     }
 
-    public WebhookSubscriptionSummaryResponse updateRegions(Long id, List<Long> regionIds) {
+    public WebhookSubscriptionSummaryResponse updateRegions(Long id, List<Long> regionIds, String authorizationHeader) {
         WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
                 .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+
+        verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
 
         List<Region> regions = regionRepository.findAllById(regionIds);
         if (regions.isEmpty()) {
@@ -73,9 +81,11 @@ public class WebhookSubscriptionService {
         return toSummary(subscription);
     }
 
-    public WebhookSubscriptionSummaryResponse reactivateWebhook(Long id) {
+    public WebhookSubscriptionSummaryResponse reactivateWebhook(Long id, String authorizationHeader) {
         WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
                 .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+
+        verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
 
         subscription.setActive(true);
         subscription.setConsecutiveFailures(0);
@@ -84,10 +94,12 @@ public class WebhookSubscriptionService {
         return toSummary(subscription);
     }
 
-    public void deleteWebhook(Long id) {
-        if (!webhookSubscriptionRepository.existsById(id)) {
-            throw new WebhookNotFoundException("Webhook not found: " + id);
-        }
+    public void deleteWebhook(Long id, String authorizationHeader) {
+        WebhookSubscription subscription = webhookSubscriptionRepository.findById(id)
+                .orElseThrow(() -> new WebhookNotFoundException("Webhook not found: " + id));
+
+        verifyManagementToken(subscription, extractBearerToken(authorizationHeader));
+
         webhookSubscriptionRepository.deleteById(id);
     }
 
@@ -99,8 +111,9 @@ public class WebhookSubscriptionService {
             throw new RegionNotFoundException("No valid regions found for provided ids");
         }
 
-        String secret = generateSecret();
-        WebhookSubscription subscription = new WebhookSubscription(request.url(), secret);
+        String secret = generateSecureToken();
+        String managementToken = generateSecureToken();
+        WebhookSubscription subscription = new WebhookSubscription(request.url(), secret, managementToken);
         subscription.setRegions(new HashSet<>(regions));
 
         webhookSubscriptionRepository.save(subscription);
@@ -108,10 +121,26 @@ public class WebhookSubscriptionService {
         return toResponse(subscription);
     }
 
-    private String generateSecret() {
+    private String generateSecureToken() {
         byte[] bytes = new byte[32];
         new SecureRandom().nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String extractBearerToken(String authorizationHeader) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            throw new UnauthorizedWebhookAccessException("Missing or malformed Authorization header");
+        }
+        return authorizationHeader.substring("Bearer ".length()).trim();
+    }
+
+    private void verifyManagementToken(WebhookSubscription subscription, String providedToken) {
+        boolean matches = MessageDigest.isEqual(
+                subscription.getManagementToken().getBytes(StandardCharsets.UTF_8),
+                providedToken.getBytes(StandardCharsets.UTF_8));
+        if (!matches) {
+            throw new UnauthorizedWebhookAccessException("Invalid management token");
+        }
     }
 
     private List<Long> extractRegionIds(WebhookSubscription subscription) {
@@ -123,6 +152,7 @@ public class WebhookSubscriptionService {
                 subscription.getId(),
                 subscription.getUrl(),
                 subscription.getSecret(),
+                subscription.getManagementToken(),
                 subscription.isActive(),
                 extractRegionIds(subscription),
                 subscription.getCreatedAt());

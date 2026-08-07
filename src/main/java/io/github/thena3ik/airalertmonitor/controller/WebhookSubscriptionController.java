@@ -23,24 +23,28 @@ public class WebhookSubscriptionController {
     }
 
     @GetMapping("/{id}")
-    public WebhookSubscriptionSummaryResponse getWebhook(@PathVariable Long id) {
-        return webhookSubscriptionService.getWebhook(id);
+    public WebhookSubscriptionSummaryResponse getWebhook(@PathVariable Long id,
+                                                         @RequestHeader("Authorization") String authorization) {
+        return webhookSubscriptionService.getWebhook(id, authorization);
     }
 
     @PutMapping("/{id}/regions")
     public WebhookSubscriptionSummaryResponse updateRegions(@PathVariable Long id,
+                                                            @RequestHeader("Authorization") String authorization,
                                                             @RequestBody UpdateWebhookRegionsRequest request) {
-        return webhookSubscriptionService.updateRegions(id, request.regionIds());
+        return webhookSubscriptionService.updateRegions(id, request.regionIds(), authorization);
     }
 
     @PostMapping("/{id}/reactivate")
-    public WebhookSubscriptionSummaryResponse reactivateWebhook(@PathVariable Long id) {
-        return webhookSubscriptionService.reactivateWebhook(id);
+    public WebhookSubscriptionSummaryResponse reactivateWebhook(@PathVariable Long id,
+                                                                @RequestHeader("Authorization") String authorization) {
+        return webhookSubscriptionService.reactivateWebhook(id, authorization);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteWebhook(@PathVariable Long id) {
-        webhookSubscriptionService.deleteWebhook(id);
+    public void deleteWebhook(@PathVariable Long id,
+                              @RequestHeader("Authorization") String authorization) {
+        webhookSubscriptionService.deleteWebhook(id, authorization);
     }
 }
