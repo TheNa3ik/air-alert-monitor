@@ -1,7 +1,7 @@
 package io.github.thena3ik.airalertmonitor.service;
 
-import io.github.thena3ik.airalertmonitor.dto.UbillingAlertsResponse;
-import io.github.thena3ik.airalertmonitor.dto.WebhookEventPayload;
+import io.github.thena3ik.airalertmonitor.dto.ubilling.UbillingAlertsResponse;
+import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookEventPayload;
 import io.github.thena3ik.airalertmonitor.entity.AlertEvent;
 import io.github.thena3ik.airalertmonitor.entity.EventType;
 import io.github.thena3ik.airalertmonitor.entity.Region;

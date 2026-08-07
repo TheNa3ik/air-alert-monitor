@@ -1,9 +1,9 @@
 package io.github.thena3ik.airalertmonitor.controller;
 
-import io.github.thena3ik.airalertmonitor.dto.CreateWebhookRequest;
-import io.github.thena3ik.airalertmonitor.dto.UpdateWebhookRegionsRequest;
-import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionResponse;
-import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionSummaryResponse;
+import io.github.thena3ik.airalertmonitor.dto.webhook.CreateWebhookRequest;
+import io.github.thena3ik.airalertmonitor.dto.webhook.UpdateWebhookRegionsRequest;
+import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionResponse;
+import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionSummaryResponse;
 import io.github.thena3ik.airalertmonitor.service.WebhookSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

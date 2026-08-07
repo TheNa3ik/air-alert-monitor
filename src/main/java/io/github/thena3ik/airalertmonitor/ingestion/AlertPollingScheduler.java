@@ -1,6 +1,6 @@
 package io.github.thena3ik.airalertmonitor.ingestion;
 
-import io.github.thena3ik.airalertmonitor.dto.UbillingAlertsResponse;
+import io.github.thena3ik.airalertmonitor.dto.ubilling.UbillingAlertsResponse;
 import io.github.thena3ik.airalertmonitor.service.AlertDiffingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

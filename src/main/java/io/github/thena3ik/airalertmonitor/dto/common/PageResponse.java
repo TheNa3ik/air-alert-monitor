@@ -1,4 +1,4 @@
-package io.github.thena3ik.airalertmonitor.dto;
+package io.github.thena3ik.airalertmonitor.dto.common;
 
 import java.util.List;
 

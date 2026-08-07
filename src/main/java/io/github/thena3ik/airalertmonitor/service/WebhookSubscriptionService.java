@@ -1,8 +1,8 @@
 package io.github.thena3ik.airalertmonitor.service;
 
-import io.github.thena3ik.airalertmonitor.dto.CreateWebhookRequest;
-import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionResponse;
-import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionSummaryResponse;
+import io.github.thena3ik.airalertmonitor.dto.webhook.CreateWebhookRequest;
+import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionResponse;
+import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionSummaryResponse;
 import io.github.thena3ik.airalertmonitor.entity.Region;
 import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
 import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;

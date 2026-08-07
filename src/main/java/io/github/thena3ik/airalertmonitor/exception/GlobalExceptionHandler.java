@@ -1,6 +1,6 @@
 package io.github.thena3ik.airalertmonitor.exception;
 
-import io.github.thena3ik.airalertmonitor.dto.ErrorResponse;
+import io.github.thena3ik.airalertmonitor.dto.common.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

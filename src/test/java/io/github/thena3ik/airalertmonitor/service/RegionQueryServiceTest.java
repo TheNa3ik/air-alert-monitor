@@ -1,6 +1,6 @@
 package io.github.thena3ik.airalertmonitor.service;
 
-import io.github.thena3ik.airalertmonitor.dto.RegionAlertStatsResponse;
+import io.github.thena3ik.airalertmonitor.dto.region.RegionAlertStatsResponse;
 import io.github.thena3ik.airalertmonitor.entity.AlertEvent;
 import io.github.thena3ik.airalertmonitor.entity.Region;
 import io.github.thena3ik.airalertmonitor.exception.InvalidDateRangeException;

@@ -1,6 +1,6 @@
 package io.github.thena3ik.airalertmonitor.notification;
 
-import io.github.thena3ik.airalertmonitor.dto.WebhookEventPayload;
+import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookEventPayload;
 import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
 import io.github.thena3ik.airalertmonitor.service.WebhookSubscriptionService;
 import io.github.thena3ik.airalertmonitor.service.WebhookUrlValidator;

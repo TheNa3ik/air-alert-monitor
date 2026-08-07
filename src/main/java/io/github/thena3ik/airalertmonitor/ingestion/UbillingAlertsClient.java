@@ -1,6 +1,6 @@
 package io.github.thena3ik.airalertmonitor.ingestion;
 
-import io.github.thena3ik.airalertmonitor.dto.UbillingAlertsResponse;
+import io.github.thena3ik.airalertmonitor.dto.ubilling.UbillingAlertsResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 

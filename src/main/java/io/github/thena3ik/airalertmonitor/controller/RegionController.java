@@ -1,9 +1,9 @@
 package io.github.thena3ik.airalertmonitor.controller;
 
-import io.github.thena3ik.airalertmonitor.dto.AlertEventResponse;
-import io.github.thena3ik.airalertmonitor.dto.PageResponse;
-import io.github.thena3ik.airalertmonitor.dto.RegionAlertStatsResponse;
-import io.github.thena3ik.airalertmonitor.dto.RegionStatusResponse;
+import io.github.thena3ik.airalertmonitor.dto.region.AlertEventResponse;
+import io.github.thena3ik.airalertmonitor.dto.common.PageResponse;
+import io.github.thena3ik.airalertmonitor.dto.region.RegionAlertStatsResponse;
+import io.github.thena3ik.airalertmonitor.dto.region.RegionStatusResponse;
 import io.github.thena3ik.airalertmonitor.service.RegionQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
