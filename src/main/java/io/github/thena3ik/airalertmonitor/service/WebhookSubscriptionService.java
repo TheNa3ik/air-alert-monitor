@@ -22,7 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WebhookService {
+public class WebhookSubscriptionService {
 
     private final WebhookUrlValidator webhookUrlValidator;
     private final RegionRepository regionRepository;

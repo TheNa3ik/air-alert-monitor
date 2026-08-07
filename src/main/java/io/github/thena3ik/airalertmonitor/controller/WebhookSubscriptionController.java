@@ -4,7 +4,7 @@ import io.github.thena3ik.airalertmonitor.dto.CreateWebhookRequest;
 import io.github.thena3ik.airalertmonitor.dto.UpdateWebhookRegionsRequest;
 import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionResponse;
 import io.github.thena3ik.airalertmonitor.dto.WebhookSubscriptionSummaryResponse;
-import io.github.thena3ik.airalertmonitor.service.WebhookService;
+import io.github.thena3ik.airalertmonitor.service.WebhookSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -12,35 +12,35 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/webhooks")
 @RequiredArgsConstructor
-public class WebhookController {
+public class WebhookSubscriptionController {
 
-    private final WebhookService webhookService;
+    private final WebhookSubscriptionService webhookSubscriptionService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public WebhookSubscriptionResponse createWebhook (@RequestBody CreateWebhookRequest request) {
-        return webhookService.createWebhook(request);
+        return webhookSubscriptionService.createWebhook(request);
     }
 
     @GetMapping("/{id}")
     public WebhookSubscriptionSummaryResponse getWebhook(@PathVariable Long id) {
-        return webhookService.getWebhook(id);
+        return webhookSubscriptionService.getWebhook(id);
     }
 
     @PutMapping("/{id}/regions")
     public WebhookSubscriptionSummaryResponse updateRegions(@PathVariable Long id,
                                                             @RequestBody UpdateWebhookRegionsRequest request) {
-        return webhookService.updateRegions(id, request.regionIds());
+        return webhookSubscriptionService.updateRegions(id, request.regionIds());
     }
 
     @PostMapping("/{id}/reactivate")
     public WebhookSubscriptionSummaryResponse reactivateWebhook(@PathVariable Long id) {
-        return webhookService.reactivateWebhook(id);
+        return webhookSubscriptionService.reactivateWebhook(id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteWebhook(@PathVariable Long id) {
-        webhookService.deleteWebhook(id);
+        webhookSubscriptionService.deleteWebhook(id);
     }
 }
