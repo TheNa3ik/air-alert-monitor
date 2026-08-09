@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.PredicateSpecification;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -44,10 +45,10 @@ class RegionQueryServiceTest {
         AlertEvent ongoing = new AlertEvent(region, startedAt, "test-source");
 
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
-        when(alertEventRepository.findByRegionAndStartedAtBetween(any(), any(), any()))
+        when(alertEventRepository.findAll(any(PredicateSpecification.class)))
                 .thenReturn(List.of(ongoing));
 
-        RegionAlertStatsResponse stats = regionQueryService.getAlertRegionStats(1L, "day", null, null, "UTC");
+        RegionAlertStatsResponse stats = regionQueryService.getRegionAlertStats(1L, "day", null, null, "UTC");
 
         assertThat(stats.totalAlertSeconds()).isGreaterThanOrEqualTo(590);
         assertThat(stats.eventCount()).isEqualTo(1);
@@ -58,7 +59,7 @@ class RegionQueryServiceTest {
         Region region = new Region(1L, "Test Region");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
-        assertThatThrownBy(() -> regionQueryService.getAlertRegionStats(1L, "fortnight", null, null, "UTC"))
+        assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, "fortnight", null, null, "UTC"))
                 .isInstanceOf(InvalidPeriodException.class);
     }
 
@@ -70,7 +71,7 @@ class RegionQueryServiceTest {
         LocalDateTime from = LocalDateTime.now();
         LocalDateTime to = from.minusDays(1);
 
-        assertThatThrownBy(() -> regionQueryService.getAlertRegionStats(1L, null, from, to, "UTC"))
+        assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, null, from, to, "UTC"))
                 .isInstanceOf(InvalidDateRangeException.class);
     }
 
@@ -79,7 +80,7 @@ class RegionQueryServiceTest {
         Region region = new Region(1L, "Test Region");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
-        assertThatThrownBy(() -> regionQueryService.getAlertRegionStats(1L, "day", null, null, "Not/AZone"))
+        assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, "day", null, null, "Not/AZone"))
                 .isInstanceOf(InvalidTimezoneException.class);
     }
 }
