@@ -27,8 +27,9 @@ public class RegionController {
     @GetMapping
     public List<RegionStatusResponse> getAllRegions(
             @RequestParam(required = false) List<Long> ids,
+            @RequestParam(required = false) List<String> names,
             @RequestParam(required = false) Boolean active) {
-        return regionQueryService.getAllRegionStatuses(ids, active);
+        return regionQueryService.getAllRegionStatuses(ids, names, active);
     }
 
     @GetMapping("/{id}")
@@ -39,11 +40,12 @@ public class RegionController {
     @GetMapping("/history")
     public PageResponse<AlertEventResponse> getRegionsHistory(
             @RequestParam(required = false) List<Long> ids,
+            @RequestParam(required = false) List<String> names,
             @RequestParam(required = false) LocalDateTime from,
             @RequestParam(required = false) LocalDateTime to,
             @RequestParam(defaultValue = "UTC") String tz,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(ids, from, to, tz, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(ids, names, from, to, tz, capPageSize(pageable));
     }
 
     @GetMapping("/{id}/history")
@@ -53,17 +55,18 @@ public class RegionController {
             @RequestParam(required = false) LocalDateTime to,
             @RequestParam(defaultValue = "UTC") String tz,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(List.of(id), from, to, tz, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(List.of(id), null, from, to, tz, capPageSize(pageable));
     }
 
     @GetMapping("/stats")
     public List<RegionAlertStatsResponse> getAllRegionStats(
             @RequestParam(required = false) List<Long> ids,
+            @RequestParam(required = false) List<String> names,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) LocalDateTime from,
             @RequestParam(required = false) LocalDateTime to,
             @RequestParam(defaultValue = "UTC") String tz) {
-        return regionQueryService.getAllRegionAlertStats(ids, period, from, to, tz);
+        return regionQueryService.getAllRegionAlertStats(ids, names, period, from, to, tz);
     }
 
     @GetMapping("/{id}/stats")

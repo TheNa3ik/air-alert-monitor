@@ -6,17 +6,16 @@ import io.github.thena3ik.airalertmonitor.dto.region.RegionAlertStatsResponse;
 import io.github.thena3ik.airalertmonitor.dto.region.RegionStatusResponse;
 import io.github.thena3ik.airalertmonitor.entity.AlertEvent;
 import io.github.thena3ik.airalertmonitor.entity.Region;
-import io.github.thena3ik.airalertmonitor.exception.InvalidDateRangeException;
-import io.github.thena3ik.airalertmonitor.exception.InvalidPeriodException;
-import io.github.thena3ik.airalertmonitor.exception.InvalidTimezoneException;
-import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
+import io.github.thena3ik.airalertmonitor.exception.*;
 import io.github.thena3ik.airalertmonitor.repository.AlertEventRepository;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.specification.AlertEventSpecifications;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.PredicateSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -32,8 +31,10 @@ public class RegionQueryService {
     private final AlertEventRepository alertEventRepository;
     private final RegionRepository regionRepository;
 
-    public List<RegionStatusResponse> getAllRegionStatuses(List<Long> regionIds, Boolean activeFilter) {
-        List<Region> regions = resolveRegions(regionIds);
+    public List<RegionStatusResponse> getAllRegionStatuses(List<Long> regionIds,
+                                                           List<String> regionNames,
+                                                           Boolean activeFilter) {
+        List<Region> regions = resolveRegions(regionIds, regionNames);
 
         return regions.stream()
                 .map(this::toStatusResponse)
@@ -46,10 +47,14 @@ public class RegionQueryService {
         return toStatusResponse(region);
     }
 
-    public PageResponse<AlertEventResponse> getRegionsHistory(
-            List<Long> regionIds, LocalDateTime fromDate, LocalDateTime toDate, String timezone, Pageable pageable) {
+    public PageResponse<AlertEventResponse> getRegionsHistory(List<Long> regionIds,
+                                                              List<String> regionNames,
+                                                              LocalDateTime fromDate,
+                                                              LocalDateTime toDate,
+                                                              String timezone,
+                                                              Pageable pageable) {
 
-        List<Region> regions = resolveRegions(regionIds);
+        List<Region> regions = resolveRegions(regionIds, regionNames);
 
         ZoneId zoneId = resolveZone(timezone);
         Instant from = (fromDate != null) ? fromDate.atZone(zoneId).toInstant() : null;
@@ -75,12 +80,13 @@ public class RegionQueryService {
     }
 
     public List<RegionAlertStatsResponse> getAllRegionAlertStats(List<Long> regionIds,
+                                                                 List<String> regionNames,
                                                                  String period,
                                                                  LocalDateTime fromDate,
                                                                  LocalDateTime toDate,
                                                                  String timezone) {
 
-        List<Region> regions = resolveRegions(regionIds);
+        List<Region> regions = resolveRegions(regionIds, regionNames);
 
         ZoneId zoneId = resolveZone(timezone);
         DateRange range = resolveDateRange(period, fromDate, toDate, zoneId);
@@ -120,10 +126,31 @@ public class RegionQueryService {
         return buildStatsResponse(timezone, region, zoneId, range, now, events);
     }
 
-    private List<Region> resolveRegions(List<Long> regionIds) {
-        return (regionIds != null && !regionIds.isEmpty())
-                ? regionRepository.findAllById(regionIds)
-                : regionRepository.findAll();
+    private List<Region> resolveRegions(List<Long> regionIds, List<String> regionNames) {
+        boolean hasIds = regionIds != null && !regionIds.isEmpty();
+        boolean hasNames = regionNames != null && !regionNames.isEmpty();
+
+        if (hasIds && hasNames) {
+            throw new InvalidFilterException("Cannot filter by both 'ids' and 'names' simultaneously.");
+        }
+
+        if (!hasIds && !hasNames) {
+            return regionRepository.findAll();
+        }
+
+        Specification<Region> spec;
+
+        if (hasIds) {
+            spec = (root, query, cb) -> root.get("id").in(regionIds);
+        } else {
+            spec = (root, query, cb) -> {
+                Predicate inNameUa = root.get("name").in(regionNames);
+                Predicate inNameEn = root.get("nameEn").in(regionNames);
+                return cb.or(inNameUa, inNameEn);
+            };
+        }
+
+        return regionRepository.findAll(spec);
     }
 
     private Region findRegionOrThrow(Long regionId) {

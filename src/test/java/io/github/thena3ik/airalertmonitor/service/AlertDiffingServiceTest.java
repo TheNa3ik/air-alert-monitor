@@ -63,7 +63,7 @@ class AlertDiffingServiceTest {
 
     @Test
     void opensNewAlertEvent_whenAlertBecomesActiveAndNoneWasOpen() {
-        Region region = new Region(1L, "Донецька область");
+        Region region = new Region(1L, "Донецька область", "Donetsk Oblast");
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
         when(alertEventRepository.findByRegionAndEndedAtIsNull(region)).thenReturn(Optional.empty());
 
@@ -74,7 +74,7 @@ class AlertDiffingServiceTest {
 
     @Test
     void doesNothing_whenAlertStillActiveAndEventAlreadyOpen() {
-        Region region = new Region(1L, "Донецька область");
+        Region region = new Region(1L, "Донецька область", "Donetsk Oblast");
         AlertEvent existingOpenEvent = new AlertEvent(region, Instant.now(), "test-source");
 
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
@@ -87,7 +87,7 @@ class AlertDiffingServiceTest {
 
     @Test
     void closesOpenAlertEvent_whenAlertBecomesInactive() {
-        Region region = new Region(1L, "Донецька область");
+        Region region = new Region(1L, "Донецька область", "Donetsk Oblast");
         AlertEvent existingOpenEvent = new AlertEvent(region, Instant.now().minusSeconds(600), "test-source");
 
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
@@ -103,7 +103,7 @@ class AlertDiffingServiceTest {
 
     @Test
     void doesNothing_whenAlertInactiveAndNoOpenEvent() {
-        Region region = new Region(1L, "Донецька область");
+        Region region = new Region(1L, "Донецька область", "Donetsk Oblast");
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
         when(alertEventRepository.findByRegionAndEndedAtIsNull(region)).thenReturn(Optional.empty());
 
@@ -124,7 +124,7 @@ class AlertDiffingServiceTest {
 
     @Test
     void triggersWebhookDelivery_whenAlertStarts() {
-        Region region = new Region(1L, "Донецька область");
+        Region region = new Region(1L, "Донецька область", "Donetsk Oblast");
         WebhookSubscription subscription = new WebhookSubscription("https://example.com/hook", "secret", "token");
 
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
@@ -139,7 +139,7 @@ class AlertDiffingServiceTest {
 
     @Test
     void doesNotTriggerWebhookDelivery_whenNoSubscribersForRegion() {
-        Region region = new Region(1L, "Донецька область");
+        Region region = new Region(1L, "Донецька область", "Donetsk Oblast");
         when(regionRepository.findByName("Донецька область")).thenReturn(Optional.of(region));
         when(alertEventRepository.findByRegionAndEndedAtIsNull(region)).thenReturn(Optional.empty());
 

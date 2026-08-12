@@ -40,7 +40,7 @@ class RegionQueryServiceTest {
 
     @Test
     void includesOngoingEvent_usingNowAsEndTime() {
-        Region region = new Region(1L, "Test Region");
+        Region region = new Region(1L, "Test Region", "Test Region EN");
         Instant startedAt = Instant.now().minus(10, ChronoUnit.MINUTES);
         AlertEvent ongoing = new AlertEvent(region, startedAt, "test-source");
 
@@ -56,7 +56,7 @@ class RegionQueryServiceTest {
 
     @Test
     void throwsInvalidPeriodException_forUnknownPeriod() {
-        Region region = new Region(1L, "Test Region");
+        Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
         assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, "fortnight", null, null, "UTC"))
@@ -65,7 +65,7 @@ class RegionQueryServiceTest {
 
     @Test
     void throwsInvalidDateRangeException_whenFromIsAfterTo() {
-        Region region = new Region(1L, "Test Region");
+        Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
         LocalDateTime from = LocalDateTime.now();
@@ -77,7 +77,7 @@ class RegionQueryServiceTest {
 
     @Test
     void throwsInvalidTimezoneException_forBadTimezoneString() {
-        Region region = new Region(1L, "Test Region");
+        Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
         assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, "day", null, null, "Not/AZone"))
