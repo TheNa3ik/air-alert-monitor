@@ -12,7 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestController
@@ -29,23 +29,25 @@ public class RegionController {
             @RequestParam(name = "ids", required = false) List<Long> regionIds,
             @RequestParam(name = "names", required = false) List<String> regionNames,
             @RequestParam(name = "active", required = false) Boolean isActiveFilter,
+            @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @RequestParam(name = "lang", defaultValue = "ua") String lang) {
-        return regionQueryService.getRegionsCurrentStatus(regionIds, regionNames, isActiveFilter, lang);
+        return regionQueryService.getRegionsCurrentStatus(regionIds, regionNames, isActiveFilter, timezone, lang);
     }
 
     @GetMapping("/{id}")
     public RegionStatusResponse getRegionCurrentStatus(
             @PathVariable(name = "id") Long regionId,
+            @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @RequestParam(name = "lang", defaultValue = "ua") String lang) {
-        return regionQueryService.getRegionCurrentStatus(regionId, lang);
+        return regionQueryService.getRegionCurrentStatus(regionId, lang, timezone);
     }
 
     @GetMapping("/history")
     public PageResponse<AlertEventResponse> getRegionsHistory(
             @RequestParam(name = "ids", required = false) List<Long> regionIds,
             @RequestParam(name = "names", required = false) List<String> regionNames,
-            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
-            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
+            @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return regionQueryService.getRegionsHistory(regionIds, regionNames, fromDate, toDate, timezone, capPageSize(pageable));
@@ -54,8 +56,8 @@ public class RegionController {
     @GetMapping("/{id}/history")
     public PageResponse<AlertEventResponse> getRegionHistory(
             @PathVariable(name = "id") Long regionId,
-            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
-            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
+            @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return regionQueryService.getRegionsHistory(List.of(regionId), null, fromDate, toDate, timezone, capPageSize(pageable));
@@ -66,8 +68,8 @@ public class RegionController {
             @RequestParam(name = "ids", required = false) List<Long> regionIds,
             @RequestParam(name = "names", required = false) List<String> regionNames,
             @RequestParam(name = "period", required = false) String period,
-            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
-            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
+            @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @RequestParam(name = "lang", defaultValue = "ua") String lang) {
         return regionQueryService.getRegionsStatistics(regionIds, regionNames, period, fromDate, toDate, timezone, lang);
@@ -77,8 +79,8 @@ public class RegionController {
     public RegionAlertStatsResponse getRegionStatistics(
             @PathVariable(name = "id") Long regionId,
             @RequestParam(name = "period", required = false) String period,
-            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
-            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
+            @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @RequestParam(name = "lang", defaultValue = "ua") String lang) {
         return regionQueryService.getRegionStatistics(regionId, period, fromDate, toDate, timezone, lang);

@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.PredicateSpecification;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -68,8 +68,8 @@ class RegionQueryServiceTest {
         Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
-        LocalDateTime fromDate = LocalDateTime.now();
-        LocalDateTime toDate = fromDate.minusDays(1);
+        OffsetDateTime fromDate = OffsetDateTime.now();
+        OffsetDateTime toDate = fromDate.minusDays(1);
 
         assertThatThrownBy(() -> regionQueryService.getRegionStatistics(1L, null, fromDate, toDate, "UTC", "ua"))
                 .isInstanceOf(InvalidDateRangeException.class);

@@ -1,15 +1,15 @@
 package io.github.thena3ik.airalertmonitor.dto.region;
 
 import java.time.Duration;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public record AlertEventResponse(
-        Instant startedAt,
-        Instant endedAt,
+        ZonedDateTime startedAt,
+        ZonedDateTime endedAt,
         Long durationSeconds,
         String source) {
 
-    public static AlertEventResponse from (Instant startedAt, Instant endedAt, String source) {
+    public static AlertEventResponse from (ZonedDateTime startedAt, ZonedDateTime endedAt, String source) {
         Long duration = endedAt != null
                 ? Duration.between(startedAt, endedAt).getSeconds()
                 : null;

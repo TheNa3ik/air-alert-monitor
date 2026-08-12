@@ -34,32 +34,37 @@ public class RegionQueryService {
     public List<RegionStatusResponse> getRegionsCurrentStatus(List<Long> regionIds,
                                                               List<String> regionNames,
                                                               Boolean isActiveFilter,
+                                                              String timezone,
                                                               String lang) {
         List<Region> regions = resolveRegions(regionIds, regionNames);
+        ZoneId zoneId = resolveTimezone(timezone);
 
         return regions.stream()
-                .map(region -> toCurrentStatusResponse(region, lang))
+                .map(region -> toCurrentStatusResponse(region, lang, zoneId))
                 .filter(status -> isActiveFilter == null || status.alertActive() == isActiveFilter)
                 .toList();
     }
 
-    public RegionStatusResponse getRegionCurrentStatus(Long regionId, String lang) {
+    public RegionStatusResponse getRegionCurrentStatus(Long regionId,
+                                                       String lang,
+                                                       String timezone) {
         Region region = findRegionOrThrow(regionId);
-        return toCurrentStatusResponse(region, lang);
+        ZoneId zoneId = resolveTimezone(timezone);
+        return toCurrentStatusResponse(region, lang, zoneId);
     }
 
     public PageResponse<AlertEventResponse> getRegionsHistory(List<Long> regionIds,
                                                               List<String> regionNames,
-                                                              LocalDateTime fromDate,
-                                                              LocalDateTime toDate,
+                                                              OffsetDateTime fromDate,
+                                                              OffsetDateTime toDate,
                                                               String timezone,
                                                               Pageable pageable) {
 
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
         ZoneId zoneId = resolveTimezone(timezone);
-        Instant fromInstant = (fromDate != null) ? fromDate.atZone(zoneId).toInstant() : null;
-        Instant toInstant = (toDate != null) ? toDate.atZone(zoneId).toInstant() : Instant.now();
+        Instant fromInstant = (fromDate != null) ? fromDate.toInstant() : null;
+        Instant toInstant = (toDate != null) ? toDate.toInstant() : Instant.now();
 
         if (fromInstant != null && fromInstant.isAfter(toInstant)) {
             throw new InvalidDateRangeException("'from' must not be after 'to'");
@@ -73,7 +78,11 @@ public class RegionQueryService {
         Page<AlertEvent> page = alertEventRepository.findBy(specification, query -> query.page(pageable));
 
         List<AlertEventResponse> content = page.getContent().stream()
-                .map(event -> AlertEventResponse.from(event.getStartedAt(), event.getEndedAt(), event.getSource()))
+                .map(event -> {
+                    ZonedDateTime startZoned = event.getStartedAt().atZone(zoneId);
+                    ZonedDateTime endZoned = (event.getEndedAt() != null) ? event.getEndedAt().atZone(zoneId) : null;
+                    return AlertEventResponse.from(startZoned, endZoned, event.getSource());
+                })
                 .toList();
 
         return new PageResponse<>(content, page.getNumber(), page.getSize(),
@@ -83,15 +92,15 @@ public class RegionQueryService {
     public List<RegionAlertStatsResponse> getRegionsStatistics(List<Long> regionIds,
                                                                List<String> regionNames,
                                                                String period,
-                                                               LocalDateTime fromDate,
-                                                               LocalDateTime toDate,
+                                                               OffsetDateTime fromDate,
+                                                               OffsetDateTime toDate,
                                                                String timezone,
                                                                String lang) {
 
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
         ZoneId zoneId = resolveTimezone(timezone);
-        DateRange dateRange = resolveDateRange(period, fromDate, toDate, zoneId);
+        DateRange dateRange = resolveDateRange(period, fromDate, toDate);
         Instant currentInstant = Instant.now();
 
         List<AlertEvent> events = alertEventRepository.findAll(
@@ -111,15 +120,15 @@ public class RegionQueryService {
 
     public RegionAlertStatsResponse getRegionStatistics(Long regionId,
                                                         String period,
-                                                        LocalDateTime fromDate,
-                                                        LocalDateTime toDate,
+                                                        OffsetDateTime fromDate,
+                                                        OffsetDateTime toDate,
                                                         String timezone,
                                                         String lang) {
 
         Region region = findRegionOrThrow(regionId);
 
         ZoneId zoneId = resolveTimezone(timezone);
-        DateRange dateRange = resolveDateRange(period, fromDate, toDate, zoneId);
+        DateRange dateRange = resolveDateRange(period, fromDate, toDate);
         Instant currentInstant = Instant.now();
 
         List<AlertEvent> events = alertEventRepository.findAll(
@@ -194,15 +203,14 @@ public class RegionQueryService {
     private record DateRange(Instant fromInstant, Instant toInstant) {}
 
     private DateRange resolveDateRange(String period,
-                                       LocalDateTime fromDate,
-                                       LocalDateTime toDate,
-                                       ZoneId zoneId) {
+                                       OffsetDateTime fromDate,
+                                       OffsetDateTime toDate) {
         Instant currentInstant = Instant.now();
-        Instant effectiveToInstant = (toDate != null) ? toDate.atZone(zoneId).toInstant() : currentInstant;
+        Instant effectiveToInstant = (toDate != null) ? toDate.toInstant() : currentInstant;
 
         Instant effectiveFromInstant;
         if (fromDate != null) {
-            effectiveFromInstant = fromDate.atZone(zoneId).toInstant();
+            effectiveFromInstant = fromDate.toInstant();
         } else {
             effectiveFromInstant = switch ((period == null || period.isBlank()) ? "month" : period) {
                 case "day" -> effectiveToInstant.minus(Duration.ofDays(1));
@@ -225,10 +233,17 @@ public class RegionQueryService {
         return Duration.between(event.getStartedAt(), endInstant).toSeconds();
     }
 
-    private RegionStatusResponse toCurrentStatusResponse(Region region, String lang) {
+    private RegionStatusResponse toCurrentStatusResponse(Region region,
+                                                         String lang,
+                                                         ZoneId zoneId) {
         Optional<AlertEvent> openEvent = alertEventRepository.findByRegionAndEndedAtIsNull(region);
         boolean isAlertActive = openEvent.isPresent();
-        var startedSince = openEvent.map(AlertEvent::getStartedAt).orElse(null);
+
+        ZonedDateTime startedSince = openEvent
+                .map(AlertEvent::getStartedAt)
+                .map(instant -> instant.atZone(zoneId))
+                .orElse(null);
+
         return new RegionStatusResponse(region.getId(), getLocalizedName(region, lang), isAlertActive, startedSince);
     }
 
