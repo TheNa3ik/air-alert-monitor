@@ -25,63 +25,63 @@ public class RegionController {
     private final RegionQueryService regionQueryService;
 
     @GetMapping
-    public List<RegionStatusResponse> getAllRegions(
-            @RequestParam(required = false) List<Long> ids,
-            @RequestParam(required = false) List<String> names,
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(defaultValue = "ua") String lang) {
-        return regionQueryService.getAllRegionStatuses(ids, names, active, lang);
+    public List<RegionStatusResponse> getRegionsCurrentStatus(
+            @RequestParam(name = "ids", required = false) List<Long> regionIds,
+            @RequestParam(name = "names", required = false) List<String> regionNames,
+            @RequestParam(name = "active", required = false) Boolean isActiveFilter,
+            @RequestParam(name = "lang", defaultValue = "ua") String lang) {
+        return regionQueryService.getRegionsCurrentStatus(regionIds, regionNames, isActiveFilter, lang);
     }
 
     @GetMapping("/{id}")
-    public RegionStatusResponse getRegionById(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "ua") String lang) {
-        return regionQueryService.getRegionStatus(id, lang);
+    public RegionStatusResponse getRegionCurrentStatus(
+            @PathVariable(name = "id") Long regionId,
+            @RequestParam(name = "lang", defaultValue = "ua") String lang) {
+        return regionQueryService.getRegionCurrentStatus(regionId, lang);
     }
 
     @GetMapping("/history")
     public PageResponse<AlertEventResponse> getRegionsHistory(
-            @RequestParam(required = false) List<Long> ids,
-            @RequestParam(required = false) List<String> names,
-            @RequestParam(required = false) LocalDateTime from,
-            @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(defaultValue = "UTC") String tz,
+            @RequestParam(name = "ids", required = false) List<Long> regionIds,
+            @RequestParam(name = "names", required = false) List<String> regionNames,
+            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
+            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(ids, names, from, to, tz, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(regionIds, regionNames, fromDate, toDate, timezone, capPageSize(pageable));
     }
 
     @GetMapping("/{id}/history")
     public PageResponse<AlertEventResponse> getRegionHistory(
-            @PathVariable Long id,
-            @RequestParam(required = false) LocalDateTime from,
-            @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(defaultValue = "UTC") String tz,
+            @PathVariable(name = "id") Long regionId,
+            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
+            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(List.of(id), null, from, to, tz, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(List.of(regionId), null, fromDate, toDate, timezone, capPageSize(pageable));
     }
 
     @GetMapping("/stats")
-    public List<RegionAlertStatsResponse> getAllRegionStats(
-            @RequestParam(required = false) List<Long> ids,
-            @RequestParam(required = false) List<String> names,
-            @RequestParam(required = false) String period,
-            @RequestParam(required = false) LocalDateTime from,
-            @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(defaultValue = "UTC") String tz,
-            @RequestParam(defaultValue = "ua") String lang) {
-        return regionQueryService.getAllRegionAlertStats(ids, names, period, from, to, tz, lang);
+    public List<RegionAlertStatsResponse> getRegionsStatistics(
+            @RequestParam(name = "ids", required = false) List<Long> regionIds,
+            @RequestParam(name = "names", required = false) List<String> regionNames,
+            @RequestParam(name = "period", required = false) String period,
+            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
+            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
+            @RequestParam(name = "lang", defaultValue = "ua") String lang) {
+        return regionQueryService.getRegionsStatistics(regionIds, regionNames, period, fromDate, toDate, timezone, lang);
     }
 
     @GetMapping("/{id}/stats")
-    public RegionAlertStatsResponse getRegionStats(
-            @PathVariable Long id,
-            @RequestParam(required = false) String period,
-            @RequestParam(required = false) LocalDateTime from,
-            @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(defaultValue = "UTC") String tz,
-            @RequestParam(defaultValue = "ua") String lang) {
-        return regionQueryService.getRegionAlertStats(id, period, from, to, tz, lang);
+    public RegionAlertStatsResponse getRegionStatistics(
+            @PathVariable(name = "id") Long regionId,
+            @RequestParam(name = "period", required = false) String period,
+            @RequestParam(name = "from", required = false) LocalDateTime fromDate,
+            @RequestParam(name = "to", required = false) LocalDateTime toDate,
+            @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
+            @RequestParam(name = "lang", defaultValue = "ua") String lang) {
+        return regionQueryService.getRegionStatistics(regionId, period, fromDate, toDate, timezone, lang);
     }
 
     private Pageable capPageSize(Pageable pageable) {

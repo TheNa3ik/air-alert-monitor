@@ -31,21 +31,21 @@ public class RegionQueryService {
     private final AlertEventRepository alertEventRepository;
     private final RegionRepository regionRepository;
 
-    public List<RegionStatusResponse> getAllRegionStatuses(List<Long> regionIds,
-                                                           List<String> regionNames,
-                                                           Boolean activeFilter,
-                                                           String lang) {
+    public List<RegionStatusResponse> getRegionsCurrentStatus(List<Long> regionIds,
+                                                              List<String> regionNames,
+                                                              Boolean isActiveFilter,
+                                                              String lang) {
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
         return regions.stream()
-                .map(region -> toStatusResponse(region, lang))
-                .filter(status -> activeFilter == null || status.alertActive() == activeFilter)
+                .map(region -> toCurrentStatusResponse(region, lang))
+                .filter(status -> isActiveFilter == null || status.alertActive() == isActiveFilter)
                 .toList();
     }
 
-    public RegionStatusResponse getRegionStatus(Long regionId, String lang) {
+    public RegionStatusResponse getRegionCurrentStatus(Long regionId, String lang) {
         Region region = findRegionOrThrow(regionId);
-        return toStatusResponse(region, lang);
+        return toCurrentStatusResponse(region, lang);
     }
 
     public PageResponse<AlertEventResponse> getRegionsHistory(List<Long> regionIds,
@@ -57,20 +57,20 @@ public class RegionQueryService {
 
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
-        ZoneId zoneId = resolveZone(timezone);
-        Instant from = (fromDate != null) ? fromDate.atZone(zoneId).toInstant() : null;
-        Instant to = (toDate != null) ? toDate.atZone(zoneId).toInstant() : Instant.now();
+        ZoneId zoneId = resolveTimezone(timezone);
+        Instant fromInstant = (fromDate != null) ? fromDate.atZone(zoneId).toInstant() : null;
+        Instant toInstant = (toDate != null) ? toDate.atZone(zoneId).toInstant() : Instant.now();
 
-        if (from != null && from.isAfter(to)) {
+        if (fromInstant != null && fromInstant.isAfter(toInstant)) {
             throw new InvalidDateRangeException("'from' must not be after 'to'");
         }
 
-        PredicateSpecification<AlertEvent> spec = AlertEventSpecifications.hasRegionIn(regions);
-        if (from != null) {
-            spec = spec.and(AlertEventSpecifications.startedBetween(from, to));
+        PredicateSpecification<AlertEvent> specification = AlertEventSpecifications.hasRegionIn(regions);
+        if (fromInstant != null) {
+            specification = specification.and(AlertEventSpecifications.startedBetween(fromInstant, toInstant));
         }
 
-        Page<AlertEvent> page = alertEventRepository.findBy(spec, query -> query.page(pageable));
+        Page<AlertEvent> page = alertEventRepository.findBy(specification, query -> query.page(pageable));
 
         List<AlertEventResponse> content = page.getContent().stream()
                 .map(event -> AlertEventResponse.from(event.getStartedAt(), event.getEndedAt(), event.getSource()))
@@ -80,36 +80,36 @@ public class RegionQueryService {
                 page.getTotalElements(), page.getTotalPages(), page.isLast());
     }
 
-    public List<RegionAlertStatsResponse> getAllRegionAlertStats(List<Long> regionIds,
-                                                                 List<String> regionNames,
-                                                                 String period,
-                                                                 LocalDateTime fromDate,
-                                                                 LocalDateTime toDate,
-                                                                 String timezone,
-                                                                 String lang) {
+    public List<RegionAlertStatsResponse> getRegionsStatistics(List<Long> regionIds,
+                                                               List<String> regionNames,
+                                                               String period,
+                                                               LocalDateTime fromDate,
+                                                               LocalDateTime toDate,
+                                                               String timezone,
+                                                               String lang) {
 
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
-        ZoneId zoneId = resolveZone(timezone);
-        DateRange range = resolveDateRange(period, fromDate, toDate, zoneId);
-        Instant now = Instant.now();
+        ZoneId zoneId = resolveTimezone(timezone);
+        DateRange dateRange = resolveDateRange(period, fromDate, toDate, zoneId);
+        Instant currentInstant = Instant.now();
 
         List<AlertEvent> events = alertEventRepository.findAll(
                 AlertEventSpecifications.hasRegionIn(regions)
-                        .and(AlertEventSpecifications.startedBetween(range.from(), range.to())));
+                        .and(AlertEventSpecifications.startedBetween(dateRange.fromInstant(), dateRange.toInstant())));
 
-        var eventsByRegion = events.stream().collect(Collectors.groupingBy(AlertEvent::getRegion));
+        var eventsGroupedByRegion = events.stream().collect(Collectors.groupingBy(AlertEvent::getRegion));
 
         return regions.stream()
                 .map(region -> {
-                    List<AlertEvent> regionEvents = eventsByRegion.getOrDefault(region, List.of());
-                    return buildStatsResponse(timezone, region, zoneId, range, now, regionEvents, lang);
+                    List<AlertEvent> regionEvents = eventsGroupedByRegion.getOrDefault(region, List.of());
+                    return toStatisticsResponse(timezone, region, zoneId, dateRange, currentInstant, regionEvents, lang);
                 })
                 .sorted(Comparator.comparingLong(RegionAlertStatsResponse::totalAlertSeconds).reversed())
                 .toList();
     }
 
-    public RegionAlertStatsResponse getRegionAlertStats(Long regionId,
+    public RegionAlertStatsResponse getRegionStatistics(Long regionId,
                                                         String period,
                                                         LocalDateTime fromDate,
                                                         LocalDateTime toDate,
@@ -118,15 +118,15 @@ public class RegionQueryService {
 
         Region region = findRegionOrThrow(regionId);
 
-        ZoneId zoneId = resolveZone(timezone);
-        DateRange range = resolveDateRange(period, fromDate, toDate, zoneId);
-        Instant now = Instant.now();
+        ZoneId zoneId = resolveTimezone(timezone);
+        DateRange dateRange = resolveDateRange(period, fromDate, toDate, zoneId);
+        Instant currentInstant = Instant.now();
 
         List<AlertEvent> events = alertEventRepository.findAll(
                 AlertEventSpecifications.hasRegionIn(List.of(region))
-                        .and(AlertEventSpecifications.startedBetween(range.from(), range.to())));
+                        .and(AlertEventSpecifications.startedBetween(dateRange.fromInstant(), dateRange.toInstant())));
 
-        return buildStatsResponse(timezone, region, zoneId, range, now, events, lang);
+        return toStatisticsResponse(timezone, region, zoneId, dateRange, currentInstant, events, lang);
     }
 
     private List<Region> resolveRegions(List<Long> regionIds, List<String> regionNames) {
@@ -141,19 +141,19 @@ public class RegionQueryService {
             return regionRepository.findAll();
         }
 
-        Specification<Region> spec;
+        Specification<Region> specification;
 
         if (hasIds) {
-            spec = (root, query, cb) -> root.get("id").in(regionIds);
+            specification = (root, query, cb) -> root.get("id").in(regionIds);
         } else {
-            spec = (root, query, cb) -> {
+            specification = (root, query, cb) -> {
                 Predicate inNameUa = root.get("name").in(regionNames);
                 Predicate inNameEn = root.get("nameEn").in(regionNames);
                 return cb.or(inNameUa, inNameEn);
             };
         }
 
-        return regionRepository.findAll(spec);
+        return regionRepository.findAll(specification);
     }
 
     private String getLocalizedName(Region region, String lang) {
@@ -165,15 +165,15 @@ public class RegionQueryService {
                 .orElseThrow(() -> new RegionNotFoundException("Region not found with regionId: " + regionId));
     }
 
-    private RegionAlertStatsResponse buildStatsResponse(String timezone,
-                                                        Region region,
-                                                        ZoneId zoneId,
-                                                        DateRange range,
-                                                        Instant now,
-                                                        List<AlertEvent> events,
-                                                        String lang) {
+    private RegionAlertStatsResponse toStatisticsResponse(String timezone,
+                                                          Region region,
+                                                          ZoneId zoneId,
+                                                          DateRange dateRange,
+                                                          Instant currentInstant,
+                                                          List<AlertEvent> events,
+                                                          String lang) {
         List<Long> durationInSeconds = events.stream()
-                .map(event -> durationSeconds(event, now))
+                .map(event -> calculateDurationInSeconds(event, currentInstant))
                 .toList();
 
         long eventCount = events.size();
@@ -183,56 +183,56 @@ public class RegionQueryService {
         return new RegionAlertStatsResponse(
                 region.getId(),
                 getLocalizedName(region, lang),
-                ZonedDateTime.ofInstant(range.from(), zoneId),
-                ZonedDateTime.ofInstant(range.to(), zoneId),
+                ZonedDateTime.ofInstant(dateRange.fromInstant(), zoneId),
+                ZonedDateTime.ofInstant(dateRange.toInstant(), zoneId),
                 timezone,
                 eventCount,
                 totalAlertSeconds,
                 longestEventSeconds);
     }
 
-    private record DateRange(Instant from, Instant to) {}
+    private record DateRange(Instant fromInstant, Instant toInstant) {}
 
     private DateRange resolveDateRange(String period,
                                        LocalDateTime fromDate,
                                        LocalDateTime toDate,
                                        ZoneId zoneId) {
-        Instant now = Instant.now();
-        Instant effectiveTo = (toDate != null) ? toDate.atZone(zoneId).toInstant() : now;
+        Instant currentInstant = Instant.now();
+        Instant effectiveToInstant = (toDate != null) ? toDate.atZone(zoneId).toInstant() : currentInstant;
 
-        Instant effectiveFrom;
+        Instant effectiveFromInstant;
         if (fromDate != null) {
-            effectiveFrom = fromDate.atZone(zoneId).toInstant();
+            effectiveFromInstant = fromDate.atZone(zoneId).toInstant();
         } else {
-            effectiveFrom = switch ((period == null || period.isBlank()) ? "month" : period) {
-                case "day" -> effectiveTo.minus(Duration.ofDays(1));
-                case "week" -> effectiveTo.minus(Duration.ofDays(7));
-                case "month" -> effectiveTo.minus(Duration.ofDays(30));
-                case "year" -> effectiveTo.minus(Duration.ofDays(365));
+            effectiveFromInstant = switch ((period == null || period.isBlank()) ? "month" : period) {
+                case "day" -> effectiveToInstant.minus(Duration.ofDays(1));
+                case "week" -> effectiveToInstant.minus(Duration.ofDays(7));
+                case "month" -> effectiveToInstant.minus(Duration.ofDays(30));
+                case "year" -> effectiveToInstant.minus(Duration.ofDays(365));
                 default -> throw new InvalidPeriodException("Unknown period: " + period);
             };
         }
 
-        if (effectiveFrom.isAfter(effectiveTo)) {
+        if (effectiveFromInstant.isAfter(effectiveToInstant)) {
             throw new InvalidDateRangeException("'from' must not be after 'to'");
         }
 
-        return new DateRange(effectiveFrom, effectiveTo);
+        return new DateRange(effectiveFromInstant, effectiveToInstant);
     }
 
-    private long durationSeconds(AlertEvent event, Instant now) {
-        Instant end = (event.getEndedAt() != null) ? event.getEndedAt() : now;
-        return Duration.between(event.getStartedAt(), end).toSeconds();
+    private long calculateDurationInSeconds(AlertEvent event, Instant currentInstant) {
+        Instant endInstant = (event.getEndedAt() != null) ? event.getEndedAt() : currentInstant;
+        return Duration.between(event.getStartedAt(), endInstant).toSeconds();
     }
 
-    private RegionStatusResponse toStatusResponse(Region region, String lang) {
+    private RegionStatusResponse toCurrentStatusResponse(Region region, String lang) {
         Optional<AlertEvent> openEvent = alertEventRepository.findByRegionAndEndedAtIsNull(region);
-        boolean alertActive = openEvent.isPresent();
-        var since = openEvent.map(AlertEvent::getStartedAt).orElse(null);
-        return new RegionStatusResponse(region.getId(), getLocalizedName(region, lang), alertActive, since);
+        boolean isAlertActive = openEvent.isPresent();
+        var startedSince = openEvent.map(AlertEvent::getStartedAt).orElse(null);
+        return new RegionStatusResponse(region.getId(), getLocalizedName(region, lang), isAlertActive, startedSince);
     }
 
-    private ZoneId resolveZone(String timezone) {
+    private ZoneId resolveTimezone(String timezone) {
         try {
             return ZoneId.of(timezone);
         } catch (DateTimeException e) {

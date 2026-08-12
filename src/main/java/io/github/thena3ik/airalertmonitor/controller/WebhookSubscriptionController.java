@@ -18,33 +18,37 @@ public class WebhookSubscriptionController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public WebhookSubscriptionResponse createWebhook (@RequestBody CreateWebhookRequest request) {
+    public WebhookSubscriptionResponse createWebhook(@RequestBody CreateWebhookRequest request) {
         return webhookSubscriptionService.createWebhook(request);
     }
 
     @GetMapping("/{id}")
-    public WebhookSubscriptionSummaryResponse getWebhook(@PathVariable Long id,
-                                                         @RequestHeader("Authorization") String authorization) {
-        return webhookSubscriptionService.getWebhook(id, authorization);
+    public WebhookSubscriptionSummaryResponse getWebhook(
+            @PathVariable(name = "id") Long subscriptionId,
+            @RequestHeader(name = "Authorization") String authorizationHeader) {
+        return webhookSubscriptionService.getWebhook(subscriptionId, authorizationHeader);
     }
 
     @PutMapping("/{id}/regions")
-    public WebhookSubscriptionSummaryResponse updateRegions(@PathVariable Long id,
-                                                            @RequestHeader("Authorization") String authorization,
-                                                            @RequestBody UpdateWebhookRegionsRequest request) {
-        return webhookSubscriptionService.updateRegions(id, request.regionIds(), authorization);
+    public WebhookSubscriptionSummaryResponse updateRegions(
+            @PathVariable(name = "id") Long subscriptionId,
+            @RequestHeader(name = "Authorization") String authorizationHeader,
+            @RequestBody UpdateWebhookRegionsRequest request) {
+        return webhookSubscriptionService.updateRegions(subscriptionId, request.regionIds(), authorizationHeader);
     }
 
     @PostMapping("/{id}/reactivate")
-    public WebhookSubscriptionSummaryResponse reactivateWebhook(@PathVariable Long id,
-                                                                @RequestHeader("Authorization") String authorization) {
-        return webhookSubscriptionService.reactivateWebhook(id, authorization);
+    public WebhookSubscriptionSummaryResponse reactivateWebhook(
+            @PathVariable(name = "id") Long subscriptionId,
+            @RequestHeader(name = "Authorization") String authorizationHeader) {
+        return webhookSubscriptionService.reactivateWebhook(subscriptionId, authorizationHeader);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteWebhook(@PathVariable Long id,
-                              @RequestHeader("Authorization") String authorization) {
-        webhookSubscriptionService.deleteWebhook(id, authorization);
+    public void deleteWebhook(
+            @PathVariable(name = "id") Long subscriptionId,
+            @RequestHeader(name = "Authorization") String authorizationHeader) {
+        webhookSubscriptionService.deleteWebhook(subscriptionId, authorizationHeader);
     }
 }

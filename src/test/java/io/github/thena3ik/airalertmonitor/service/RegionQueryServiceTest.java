@@ -48,10 +48,10 @@ class RegionQueryServiceTest {
         when(alertEventRepository.findAll(any(PredicateSpecification.class)))
                 .thenReturn(List.of(ongoing));
 
-        RegionAlertStatsResponse stats = regionQueryService.getRegionAlertStats(1L, "day", null, null, "UTC", "ua");
+        RegionAlertStatsResponse statistics = regionQueryService.getRegionStatistics(1L, "day", null, null, "UTC", "ua");
 
-        assertThat(stats.totalAlertSeconds()).isGreaterThanOrEqualTo(590);
-        assertThat(stats.eventCount()).isEqualTo(1);
+        assertThat(statistics.totalAlertSeconds()).isGreaterThanOrEqualTo(590);
+        assertThat(statistics.eventCount()).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +59,7 @@ class RegionQueryServiceTest {
         Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
-        assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, "fortnight", null, null, "UTC", "ua"))
+        assertThatThrownBy(() -> regionQueryService.getRegionStatistics(1L, "fortnight", null, null, "UTC", "ua"))
                 .isInstanceOf(InvalidPeriodException.class);
     }
 
@@ -68,10 +68,10 @@ class RegionQueryServiceTest {
         Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
-        LocalDateTime from = LocalDateTime.now();
-        LocalDateTime to = from.minusDays(1);
+        LocalDateTime fromDate = LocalDateTime.now();
+        LocalDateTime toDate = fromDate.minusDays(1);
 
-        assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, null, from, to, "UTC", "ua"))
+        assertThatThrownBy(() -> regionQueryService.getRegionStatistics(1L, null, fromDate, toDate, "UTC", "ua"))
                 .isInstanceOf(InvalidDateRangeException.class);
     }
 
@@ -80,7 +80,7 @@ class RegionQueryServiceTest {
         Region region = new Region(1L, "Test Region", "Test Region EN");
         when(regionRepository.findById(1L)).thenReturn(Optional.of(region));
 
-        assertThatThrownBy(() -> regionQueryService.getRegionAlertStats(1L, "day", null, null, "Not/AZone", "ua"))
+        assertThatThrownBy(() -> regionQueryService.getRegionStatistics(1L, "day", null, null, "Not/AZone", "ua"))
                 .isInstanceOf(InvalidTimezoneException.class);
     }
 }

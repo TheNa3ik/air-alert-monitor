@@ -12,10 +12,10 @@ public class AlertEventSpecifications {
     private AlertEventSpecifications() {}
 
     public static PredicateSpecification<AlertEvent> hasRegionIn(List<Region> regions) {
-        return (from, builder) -> from.get("region").in(regions);
+        return (root, builder) -> root.get("region").in(regions);
     }
 
-    public static PredicateSpecification<AlertEvent> startedBetween(Instant from, Instant to) {
-        return (root, builder) -> builder.between(root.get("startedAt"), from, to);
+    public static PredicateSpecification<AlertEvent> startedBetween(Instant fromInstant, Instant toInstant) {
+        return (root, builder) -> builder.between(root.get("startedAt"), fromInstant, toInstant);
     }
 }
