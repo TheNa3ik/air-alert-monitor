@@ -10,12 +10,11 @@ import io.github.thena3ik.airalertmonitor.exception.*;
 import io.github.thena3ik.airalertmonitor.repository.AlertEventRepository;
 import io.github.thena3ik.airalertmonitor.repository.RegionRepository;
 import io.github.thena3ik.airalertmonitor.specification.AlertEventSpecifications;
-import jakarta.persistence.criteria.Predicate;
+import io.github.thena3ik.airalertmonitor.specification.RegionSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.PredicateSpecification;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
@@ -154,17 +153,9 @@ public class RegionQueryService {
             return regionRepository.findAll();
         }
 
-        Specification<Region> specification;
-
-        if (hasIds) {
-            specification = (root, query, cb) -> root.get("id").in(regionIds);
-        } else {
-            specification = (root, query, cb) -> {
-                Predicate inNameUa = root.get("name").in(regionNames);
-                Predicate inNameEn = root.get("nameEn").in(regionNames);
-                return cb.or(inNameUa, inNameEn);
-            };
-        }
+        PredicateSpecification<Region> specification = hasIds
+                ? RegionSpecifications.hasIdIn(regionIds)
+                : RegionSpecifications.hasNameIn(regionNames);
 
         return regionRepository.findAll(specification);
     }
