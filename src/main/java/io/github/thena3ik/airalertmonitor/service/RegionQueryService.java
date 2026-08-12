@@ -33,18 +33,19 @@ public class RegionQueryService {
 
     public List<RegionStatusResponse> getAllRegionStatuses(List<Long> regionIds,
                                                            List<String> regionNames,
-                                                           Boolean activeFilter) {
+                                                           Boolean activeFilter,
+                                                           String lang) {
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
         return regions.stream()
-                .map(this::toStatusResponse)
+                .map(region -> toStatusResponse(region, lang))
                 .filter(status -> activeFilter == null || status.alertActive() == activeFilter)
                 .toList();
     }
 
-    public RegionStatusResponse getRegionStatus(Long regionId) {
+    public RegionStatusResponse getRegionStatus(Long regionId, String lang) {
         Region region = findRegionOrThrow(regionId);
-        return toStatusResponse(region);
+        return toStatusResponse(region, lang);
     }
 
     public PageResponse<AlertEventResponse> getRegionsHistory(List<Long> regionIds,
@@ -84,7 +85,8 @@ public class RegionQueryService {
                                                                  String period,
                                                                  LocalDateTime fromDate,
                                                                  LocalDateTime toDate,
-                                                                 String timezone) {
+                                                                 String timezone,
+                                                                 String lang) {
 
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
@@ -101,7 +103,7 @@ public class RegionQueryService {
         return regions.stream()
                 .map(region -> {
                     List<AlertEvent> regionEvents = eventsByRegion.getOrDefault(region, List.of());
-                    return buildStatsResponse(timezone, region, zoneId, range, now, regionEvents);
+                    return buildStatsResponse(timezone, region, zoneId, range, now, regionEvents, lang);
                 })
                 .sorted(Comparator.comparingLong(RegionAlertStatsResponse::totalAlertSeconds).reversed())
                 .toList();
@@ -111,7 +113,8 @@ public class RegionQueryService {
                                                         String period,
                                                         LocalDateTime fromDate,
                                                         LocalDateTime toDate,
-                                                        String timezone) {
+                                                        String timezone,
+                                                        String lang) {
 
         Region region = findRegionOrThrow(regionId);
 
@@ -123,7 +126,7 @@ public class RegionQueryService {
                 AlertEventSpecifications.hasRegionIn(List.of(region))
                         .and(AlertEventSpecifications.startedBetween(range.from(), range.to())));
 
-        return buildStatsResponse(timezone, region, zoneId, range, now, events);
+        return buildStatsResponse(timezone, region, zoneId, range, now, events, lang);
     }
 
     private List<Region> resolveRegions(List<Long> regionIds, List<String> regionNames) {
@@ -153,6 +156,10 @@ public class RegionQueryService {
         return regionRepository.findAll(spec);
     }
 
+    private String getLocalizedName(Region region, String lang) {
+        return "en".equalsIgnoreCase(lang) ? region.getNameEn() : region.getName();
+    }
+
     private Region findRegionOrThrow(Long regionId) {
         return regionRepository.findById(regionId)
                 .orElseThrow(() -> new RegionNotFoundException("Region not found with regionId: " + regionId));
@@ -163,7 +170,8 @@ public class RegionQueryService {
                                                         ZoneId zoneId,
                                                         DateRange range,
                                                         Instant now,
-                                                        List<AlertEvent> events) {
+                                                        List<AlertEvent> events,
+                                                        String lang) {
         List<Long> durationInSeconds = events.stream()
                 .map(event -> durationSeconds(event, now))
                 .toList();
@@ -174,7 +182,7 @@ public class RegionQueryService {
 
         return new RegionAlertStatsResponse(
                 region.getId(),
-                region.getName(),
+                getLocalizedName(region, lang),
                 ZonedDateTime.ofInstant(range.from(), zoneId),
                 ZonedDateTime.ofInstant(range.to(), zoneId),
                 timezone,
@@ -217,11 +225,11 @@ public class RegionQueryService {
         return Duration.between(event.getStartedAt(), end).toSeconds();
     }
 
-    private RegionStatusResponse toStatusResponse(Region region) {
+    private RegionStatusResponse toStatusResponse(Region region, String lang) {
         Optional<AlertEvent> openEvent = alertEventRepository.findByRegionAndEndedAtIsNull(region);
         boolean alertActive = openEvent.isPresent();
         var since = openEvent.map(AlertEvent::getStartedAt).orElse(null);
-        return new RegionStatusResponse(region.getId(), region.getName(), alertActive, since);
+        return new RegionStatusResponse(region.getId(), getLocalizedName(region, lang), alertActive, since);
     }
 
     private ZoneId resolveZone(String timezone) {

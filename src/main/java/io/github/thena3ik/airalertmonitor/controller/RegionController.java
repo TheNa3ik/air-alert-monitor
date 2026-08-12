@@ -28,13 +28,16 @@ public class RegionController {
     public List<RegionStatusResponse> getAllRegions(
             @RequestParam(required = false) List<Long> ids,
             @RequestParam(required = false) List<String> names,
-            @RequestParam(required = false) Boolean active) {
-        return regionQueryService.getAllRegionStatuses(ids, names, active);
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(defaultValue = "ua") String lang) {
+        return regionQueryService.getAllRegionStatuses(ids, names, active, lang);
     }
 
     @GetMapping("/{id}")
-    public RegionStatusResponse getRegionById(@PathVariable Long id) {
-        return regionQueryService.getRegionStatus(id);
+    public RegionStatusResponse getRegionById(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "ua") String lang) {
+        return regionQueryService.getRegionStatus(id, lang);
     }
 
     @GetMapping("/history")
@@ -65,8 +68,9 @@ public class RegionController {
             @RequestParam(required = false) String period,
             @RequestParam(required = false) LocalDateTime from,
             @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(defaultValue = "UTC") String tz) {
-        return regionQueryService.getAllRegionAlertStats(ids, names, period, from, to, tz);
+            @RequestParam(defaultValue = "UTC") String tz,
+            @RequestParam(defaultValue = "ua") String lang) {
+        return regionQueryService.getAllRegionAlertStats(ids, names, period, from, to, tz, lang);
     }
 
     @GetMapping("/{id}/stats")
@@ -75,8 +79,9 @@ public class RegionController {
             @RequestParam(required = false) String period,
             @RequestParam(required = false) LocalDateTime from,
             @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(defaultValue = "UTC") String tz) {
-        return regionQueryService.getRegionAlertStats(id, period, from, to, tz);
+            @RequestParam(defaultValue = "UTC") String tz,
+            @RequestParam(defaultValue = "ua") String lang) {
+        return regionQueryService.getRegionAlertStats(id, period, from, to, tz, lang);
     }
 
     private Pageable capPageSize(Pageable pageable) {
