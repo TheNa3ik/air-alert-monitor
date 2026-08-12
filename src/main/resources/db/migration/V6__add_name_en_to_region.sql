@@ -1,0 +1,30 @@
+ALTER TABLE region ADD COLUMN name_en VARCHAR(150);
+
+UPDATE region SET name_en = 'Vinnytsia Oblast' WHERE id = 1;
+UPDATE region SET name_en = 'Volyn Oblast' WHERE id = 2;
+UPDATE region SET name_en = 'Dnipropetrovsk Oblast' WHERE id = 3;
+UPDATE region SET name_en = 'Donetsk Oblast' WHERE id = 4;
+UPDATE region SET name_en = 'Zhytomyr Oblast' WHERE id = 5;
+UPDATE region SET name_en = 'Zakarpattia Oblast' WHERE id = 6;
+UPDATE region SET name_en = 'Zaporizhzhia Oblast' WHERE id = 7;
+UPDATE region SET name_en = 'Ivano-Frankivsk Oblast' WHERE id = 8;
+UPDATE region SET name_en = 'Kyiv Oblast' WHERE id = 9;
+UPDATE region SET name_en = 'Kirovohrad Oblast' WHERE id = 10;
+UPDATE region SET name_en = 'Luhansk Oblast' WHERE id = 11;
+UPDATE region SET name_en = 'Lviv Oblast' WHERE id = 12;
+UPDATE region SET name_en = 'Mykolaiv Oblast' WHERE id = 13;
+UPDATE region SET name_en = 'Odesa Oblast' WHERE id = 14;
+UPDATE region SET name_en = 'Poltava Oblast' WHERE id = 15;
+UPDATE region SET name_en = 'Rivne Oblast' WHERE id = 16;
+UPDATE region SET name_en = 'Sumy Oblast' WHERE id = 17;
+UPDATE region SET name_en = 'Ternopil Oblast' WHERE id = 18;
+UPDATE region SET name_en = 'Kharkiv Oblast' WHERE id = 19;
+UPDATE region SET name_en = 'Kherson Oblast' WHERE id = 20;
+UPDATE region SET name_en = 'Khmelnytskyi Oblast' WHERE id = 21;
+UPDATE region SET name_en = 'Cherkasy Oblast' WHERE id = 22;
+UPDATE region SET name_en = 'Chernivtsi Oblast' WHERE id = 23;
+UPDATE region SET name_en = 'Chernihiv Oblast' WHERE id = 24;
+UPDATE region SET name_en = 'Kyiv City' WHERE id = 25;
+
+ALTER TABLE region MODIFY name_en VARCHAR(150) NOT NULL;
+ALTER TABLE region ADD CONSTRAINT uk_region_name_en UNIQUE (name_en);

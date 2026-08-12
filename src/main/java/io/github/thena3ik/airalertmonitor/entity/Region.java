@@ -17,4 +17,7 @@ public class Region {
 
     @Column(nullable = false, unique = true, length = 150)
     private String name;
+
+    @Column(name = "name_en", nullable = false, unique = true, length = 150)
+    private String nameEn;
 }
