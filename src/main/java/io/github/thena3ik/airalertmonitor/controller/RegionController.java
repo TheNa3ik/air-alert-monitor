@@ -49,8 +49,9 @@ public class RegionController {
             @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
             @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
+            @RequestParam(name = "lang", defaultValue = "ua") String lang,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(regionIds, regionNames, fromDate, toDate, timezone, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(regionIds, regionNames, fromDate, toDate, timezone, lang, capPageSize(pageable));
     }
 
     @GetMapping("/{id}/history")
@@ -59,8 +60,9 @@ public class RegionController {
             @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
             @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
+            @RequestParam(name = "lang", defaultValue = "ua") String lang,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(List.of(regionId), null, fromDate, toDate, timezone, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(List.of(regionId), null, fromDate, toDate, timezone, lang, capPageSize(pageable));
     }
 
     @GetMapping("/stats")

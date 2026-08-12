@@ -58,6 +58,7 @@ public class RegionQueryService {
                                                               OffsetDateTime fromDate,
                                                               OffsetDateTime toDate,
                                                               String timezone,
+                                                              String lang,
                                                               Pageable pageable) {
 
         List<Region> regions = resolveRegions(regionIds, regionNames);
@@ -79,9 +80,12 @@ public class RegionQueryService {
 
         List<AlertEventResponse> content = page.getContent().stream()
                 .map(event -> {
+                    Region region = event.getRegion();
+                    String localizedName = getLocalizedName(region, lang);
+
                     ZonedDateTime startZoned = event.getStartedAt().atZone(zoneId);
                     ZonedDateTime endZoned = (event.getEndedAt() != null) ? event.getEndedAt().atZone(zoneId) : null;
-                    return AlertEventResponse.from(startZoned, endZoned, event.getSource());
+                    return AlertEventResponse.from(region.getId(), localizedName, startZoned, endZoned, event.getSource());
                 })
                 .toList();
 
