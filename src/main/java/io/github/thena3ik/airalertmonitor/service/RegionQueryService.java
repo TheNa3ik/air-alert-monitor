@@ -54,6 +54,7 @@ public class RegionQueryService {
 
     public PageResponse<AlertEventResponse> getRegionsHistory(List<Long> regionIds,
                                                               List<String> regionNames,
+                                                              String period,
                                                               OffsetDateTime fromDate,
                                                               OffsetDateTime toDate,
                                                               String timezone,
@@ -63,17 +64,10 @@ public class RegionQueryService {
         List<Region> regions = resolveRegions(regionIds, regionNames);
 
         ZoneId zoneId = resolveTimezone(timezone);
-        Instant fromInstant = (fromDate != null) ? fromDate.toInstant() : null;
-        Instant toInstant = (toDate != null) ? toDate.toInstant() : Instant.now();
+        DateRange dateRange = resolveDateRange(period, fromDate, toDate);
 
-        if (fromInstant != null && fromInstant.isAfter(toInstant)) {
-            throw new InvalidDateRangeException("'from' must not be after 'to'");
-        }
-
-        PredicateSpecification<AlertEvent> specification = AlertEventSpecifications.hasRegionIn(regions);
-        if (fromInstant != null) {
-            specification = specification.and(AlertEventSpecifications.startedBetween(fromInstant, toInstant));
-        }
+        PredicateSpecification<AlertEvent> specification = AlertEventSpecifications.hasRegionIn(regions)
+                .and(AlertEventSpecifications.startedBetween(dateRange.fromInstant(), dateRange.toInstant()));
 
         Page<AlertEvent> page = alertEventRepository.findBy(specification, query -> query.page(pageable));
 

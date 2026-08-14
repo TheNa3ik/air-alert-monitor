@@ -46,23 +46,27 @@ public class RegionController {
     public PageResponse<AlertEventResponse> getRegionsHistory(
             @RequestParam(name = "ids", required = false) List<Long> regionIds,
             @RequestParam(name = "names", required = false) List<String> regionNames,
+            @RequestParam(name = "period", required = false) String period,
             @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
             @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @RequestParam(name = "lang", defaultValue = "ua") String lang,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(regionIds, regionNames, fromDate, toDate, timezone, lang, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(
+                regionIds, regionNames, period, fromDate, toDate, timezone, lang, capPageSize(pageable));
     }
 
     @GetMapping("/{id}/history")
     public PageResponse<AlertEventResponse> getRegionHistory(
             @PathVariable(name = "id") Long regionId,
+            @RequestParam(name = "period", required = false) String period,
             @RequestParam(name = "from", required = false) OffsetDateTime fromDate,
             @RequestParam(name = "to", required = false) OffsetDateTime toDate,
             @RequestParam(name = "tz", defaultValue = "UTC") String timezone,
             @RequestParam(name = "lang", defaultValue = "ua") String lang,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return regionQueryService.getRegionsHistory(List.of(regionId), null, fromDate, toDate, timezone, lang, capPageSize(pageable));
+        return regionQueryService.getRegionsHistory(
+                List.of(regionId), null, period, fromDate, toDate, timezone, lang, capPageSize(pageable));
     }
 
     @GetMapping("/stats")
