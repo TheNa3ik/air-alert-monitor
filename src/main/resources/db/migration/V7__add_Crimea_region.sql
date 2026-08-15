@@ -1,0 +1,1 @@
+INSERT INTO region (name, name_en) VALUES ('Автономна Республіка Крим', 'Autonomous Republic of Crimea');
