@@ -60,6 +60,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleDuplicateWebhookSubscriptionException(DuplicateWebhookSubscriptionException exc) {
+        ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), exc.getMessage(), Instant.now());
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exc) {
         ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), exc.getMessage(), Instant.now());
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);

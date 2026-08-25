@@ -5,6 +5,7 @@ import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionRespons
 import io.github.thena3ik.airalertmonitor.dto.webhook.WebhookSubscriptionSummaryResponse;
 import io.github.thena3ik.airalertmonitor.entity.Region;
 import io.github.thena3ik.airalertmonitor.entity.WebhookSubscription;
+import io.github.thena3ik.airalertmonitor.exception.DuplicateWebhookSubscriptionException;
 import io.github.thena3ik.airalertmonitor.exception.RegionNotFoundException;
 import io.github.thena3ik.airalertmonitor.exception.UnauthorizedWebhookAccessException;
 import io.github.thena3ik.airalertmonitor.exception.WebhookNotFoundException;
@@ -103,6 +104,11 @@ public class WebhookSubscriptionService {
 
     public WebhookSubscriptionResponse createWebhook(CreateWebhookRequest request) {
         webhookUrlValidator.validate(request.url());
+
+        if (webhookSubscriptionRepository.findByUrlAndActiveTrue(request.url()).isPresent()) {
+            throw new DuplicateWebhookSubscriptionException(
+                    "An active webhook subscription already exists for this URL: " + request.url());
+        }
 
         List<Region> regions = regionRepository.findAllById(request.regionIds());
         if (regions.isEmpty()) {
