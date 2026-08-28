@@ -179,6 +179,7 @@ public class RegionQueryService {
                 case "week" -> effectiveToInstant.minus(Duration.ofDays(7));
                 case "month" -> effectiveToInstant.minus(Duration.ofDays(30));
                 case "year" -> effectiveToInstant.minus(Duration.ofDays(365));
+                case "all" -> Instant.EPOCH;
                 default -> throw new InvalidPeriodException("Unknown period: " + period);
             };
         }
