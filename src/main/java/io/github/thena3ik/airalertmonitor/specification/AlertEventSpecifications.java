@@ -15,7 +15,13 @@ public class AlertEventSpecifications {
         return (root, builder) -> root.get("region").in(regions);
     }
 
-    public static PredicateSpecification<AlertEvent> startedBetween(Instant fromInstant, Instant toInstant) {
-        return (root, builder) -> builder.between(root.get("startedAt"), fromInstant, toInstant);
+    public static PredicateSpecification<AlertEvent> activeDuring(Instant fromInstant, Instant toInstant) {
+        return (root, builder) -> builder.and(
+                builder.lessThanOrEqualTo(root.get("startedAt"), toInstant),
+                builder.or(
+                        builder.isNull(root.get("endedAt")),
+                        builder.greaterThanOrEqualTo(root.get("endedAt"), fromInstant)
+                )
+        );
     }
 }
