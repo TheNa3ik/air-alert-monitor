@@ -8,22 +8,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnExpression("!'${air-alert.polling.enabled:true}'.equalsIgnoreCase('false')")
+@RequiredArgsConstructor
+@Slf4j
 public class AlertPollingScheduler {
 
-    private final UbillingAlertsClient ubillingAlertsClient;
+    private final AlertSourceClient alertSourceClient;
     private final AlertDiffingService alertDiffingService;
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelayString = "${air-alert.polling.interval-ms:5000}")
     public void checkAlerts() {
-
-        UbillingAlertsResponse response;
-
         try {
-            response = ubillingAlertsClient.fetchCurrentStates();
+            UbillingAlertsResponse response = alertSourceClient.fetchCurrentStates();
             alertDiffingService.processPoll(response);
         } catch (Exception exc) {
             log.warn("Failed to poll/process alerts", exc);

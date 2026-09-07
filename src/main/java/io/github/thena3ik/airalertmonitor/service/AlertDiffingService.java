@@ -28,6 +28,7 @@ public class AlertDiffingService {
     private final AlertEventRepository alertEventRepository;
     private final WebhookSubscriptionRepository webhookSubscriptionRepository;
     private final WebhookDeliveryClient webhookDeliveryClient;
+    private final AlertTransitionDebouncer transitionDebouncer;
 
     @Transactional
     public void processPoll(UbillingAlertsResponse response) {
@@ -36,7 +37,6 @@ public class AlertDiffingService {
             boolean alertNowActive = entry.getValue().alertnow();
 
             Optional<Region> maybeRegion = regionRepository.findByName(regionName);
-
             if (maybeRegion.isEmpty()) {
                 log.warn("Unknown region from API: {}, skipping", regionName);
                 continue;
@@ -44,13 +44,27 @@ public class AlertDiffingService {
             Region region = maybeRegion.get();
 
             Optional<AlertEvent> openEvent = alertEventRepository.findByRegionAndEndedAtIsNull(region);
+            boolean confirmedActive = openEvent.isPresent();
 
-            if (openEvent.isEmpty() && alertNowActive) {
-                AlertEvent newEvent = alertEventRepository.save(new AlertEvent(region, Instant.now(), response.source()));
+            if (alertNowActive == confirmedActive) {
+                transitionDebouncer.clear(region.getId());
+                continue;
+            }
+
+            Optional<Instant> confirmedAt = transitionDebouncer.confirm(region.getId(), alertNowActive);
+            if (confirmedAt.isEmpty()) {
+                log.debug("Region {} candidate alertnow={} not yet confirmed", regionName, alertNowActive);
+                continue;
+            }
+
+            Instant occurredAt = confirmedAt.get();
+
+            if (alertNowActive) {
+                AlertEvent newEvent = alertEventRepository.save(new AlertEvent(region, occurredAt, response.source()));
                 notifySubscribers(region, EventType.ALERT_STARTED, newEvent.getStartedAt());
-            } else if (openEvent.isPresent() && !alertNowActive) {
+            } else {
                 AlertEvent eventToClose = openEvent.get();
-                eventToClose.close(Instant.now());
+                eventToClose.close(occurredAt);
                 alertEventRepository.save(eventToClose);
                 notifySubscribers(region, EventType.ALERT_ENDED, eventToClose.getStartedAt());
             }
@@ -59,13 +73,11 @@ public class AlertDiffingService {
 
     private void notifySubscribers(Region region, EventType eventType, Instant occurredAt) {
         List<WebhookSubscription> subscriptions = webhookSubscriptionRepository.findByRegionsContainingAndActiveTrue(region);
-
         if (subscriptions.isEmpty()) {
             return;
         }
 
         WebhookEventPayload payload = new WebhookEventPayload(eventType, region.getId(), region.getName(), occurredAt);
-
         for (WebhookSubscription subscription : subscriptions) {
             webhookDeliveryClient.deliver(subscription, payload);
         }

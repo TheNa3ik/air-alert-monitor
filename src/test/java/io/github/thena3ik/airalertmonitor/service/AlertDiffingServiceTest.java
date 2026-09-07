@@ -46,12 +46,17 @@ class AlertDiffingServiceTest {
     @InjectMocks
     private AlertDiffingService alertDiffingService;
 
+    @Mock
+    private AlertTransitionDebouncer transitionDebouncer;
+
     @BeforeEach
     void setUp() {
         lenient().when(alertEventRepository.save(any(AlertEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(webhookSubscriptionRepository.findByRegionsContainingAndActiveTrue(any()))
                 .thenReturn(List.of());
+        lenient().when(transitionDebouncer.confirm(any(), anyBoolean()))
+                .thenReturn(Optional.of(Instant.now()));
     }
 
     private UbillingAlertsResponse responseWith(String regionName, boolean alertNow) {

@@ -75,6 +75,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleUbillingPollException(UbillingPollException exc) {
+        log.warn("Ubilling poll failed", exc);
+        ErrorResponse error = new ErrorResponse(HttpStatus.BAD_GATEWAY.value(), exc.getMessage(), Instant.now());
+        return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exc) {
         log.error("Unexpected error", exc);
         ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred", Instant.now());
