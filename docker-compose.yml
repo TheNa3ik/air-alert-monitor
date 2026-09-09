@@ -1,36 +1,35 @@
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: air-alert-mysql
+  db:
+    image: postgres:16-alpine
+    container_name: air-alert-db
     restart: unless-stopped
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "${MYSQL_PORT}:3306"
+      - "${DB_PORT:-5432}:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   monitor:
     build: .
+    image: air-alert-monitor:latest
     container_name: air-alert-monitor
     restart: unless-stopped
     depends_on:
-      mysql:
+      db:
         condition: service_healthy
     env_file:
       - .env
     environment:
-      - MYSQL_HOST=${MYSQL_HOST_INTERNAL:-mysql}
-      - MYSQL_PORT=3306
+      - DB_HOST=${DB_HOST_DOCKER:-db}
+      - DB_PORT=5432
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-}
     ports:
       - "8080:8080"
@@ -42,4 +41,4 @@ services:
       start_period: 30s
 
 volumes:
-  mysql_data:
+  postgres_data:

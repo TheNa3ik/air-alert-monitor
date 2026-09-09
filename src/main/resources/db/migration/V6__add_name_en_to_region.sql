@@ -26,5 +26,5 @@ UPDATE region SET name_en = 'Chernivtsi Oblast' WHERE id = 23;
 UPDATE region SET name_en = 'Chernihiv Oblast' WHERE id = 24;
 UPDATE region SET name_en = 'Kyiv City' WHERE id = 25;
 
-ALTER TABLE region MODIFY name_en VARCHAR(150) NOT NULL;
+ALTER TABLE region ALTER COLUMN name_en SET NOT NULL;
 ALTER TABLE region ADD CONSTRAINT uk_region_name_en UNIQUE (name_en);
