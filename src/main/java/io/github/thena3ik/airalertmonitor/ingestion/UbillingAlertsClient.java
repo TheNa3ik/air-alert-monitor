@@ -3,6 +3,7 @@ package io.github.thena3ik.airalertmonitor.ingestion;
 import io.github.thena3ik.airalertmonitor.dto.ubilling.UbillingAlertsResponse;
 import io.github.thena3ik.airalertmonitor.exception.UbillingPollException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -13,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Component
+@RegisterReflectionForBinding(UbillingAlertsResponse.class)
 public class UbillingAlertsClient implements AlertSourceClient {
 
     private static final String BASE_URL = "https://ubilling.net.ua/aerialalerts/";
