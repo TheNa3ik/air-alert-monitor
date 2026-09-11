@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Air Alert API</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+<script id="api-reference" data-url="./openapi.json"></script>
+
+<script>
+    const configuration = {
+        spec: {
+            url: './openapi.json'
+        },
+        showDeveloperTools: "never",
+        theme: 'kepler',
+
+        hideModels: true,
+        hideTestRequestButton: true,
+        defaultOpenFirstTag: false,
+    }
+    document.getElementById('api-reference').dataset.configuration = JSON.stringify(configuration)
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>

@@ -88,6 +88,17 @@ public class RegionQueryService {
                 page.getTotalElements(), page.getTotalPages(), page.isLast());
     }
 
+    public PageResponse<AlertEventResponse> getRegionHistory(Long regionId,
+                                                             String period,
+                                                             OffsetDateTime fromDate,
+                                                             OffsetDateTime toDate,
+                                                             String timezone,
+                                                             String lang,
+                                                             Pageable pageable) {
+        Region region = findRegionOrThrow(regionId);
+        return getRegionsHistory(List.of(region.getId()), null, period, fromDate, toDate, timezone, lang, pageable);
+    }
+
     public List<RegionAlertStatsResponse> getRegionsStatistics(List<Long> regionIds,
                                                                List<String> regionNames,
                                                                String period,
