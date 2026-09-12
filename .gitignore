@@ -36,3 +36,7 @@ build/
 .env.*.local
 *.env.bak
 *.log
+
+openapi-en.json
+openapi-uk.json
+openapi.json

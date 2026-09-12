@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        run: mvn -B test
+
+  docs:
+    name: Generate & deploy API docs
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: air_alert_docs
+          POSTGRES_USER: docs
+          POSTGRES_PASSWORD: docs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build jar
+        run: mvn -B package -DskipTests
+
+      - name: Start app with docs profile
+        run: |
+          nohup java -jar target/*.jar --spring.profiles.active=docs > app.log 2>&1 &
+          echo "Waiting for app to be ready..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null; then
+              echo "App is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App failed to start in time"
+          cat app.log
+          exit 1
+
+      - name: Generate OpenAPI specs (en + uk)
+        run: |
+          curl -sf -H "Accept-Language: en" http://localhost:8080/v3/api-docs -o openapi-en.json
+          curl -sf -H "Accept-Language: uk" http://localhost:8080/v3/api-docs -o openapi-uk.json
+
+      - name: Assemble static docs site
+        run: |
+          mkdir -p site
+          cp openapi-en.json site/openapi-en.json
+          cp openapi-uk.json site/openapi-uk.json
+          cp docs/index.html site/index.html
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
