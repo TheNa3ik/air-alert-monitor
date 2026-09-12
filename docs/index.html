@@ -9,23 +9,33 @@
     </style>
 </head>
 <body>
-<script id="api-reference" data-url="./openapi.json"></script>
+<div id="scalar-app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 
 <script>
-    const configuration = {
-        spec: {
-            url: './openapi.json'
-        },
+    const targetElement = document.getElementById('scalar-app');
+
+    const config = {
         showDeveloperTools: "never",
         theme: 'kepler',
-
-        hideModels: true,
+        hideModels: false,
         hideTestRequestButton: true,
         defaultOpenFirstTag: false,
-    }
-    document.getElementById('api-reference').dataset.configuration = JSON.stringify(configuration)
-</script>
 
-<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+        sources: [
+            {
+                title: 'Українська',
+                url: './openapi-uk.json',
+                default: true
+            },
+            {
+                title: 'English',
+                url: './openapi-en.json'
+            }
+        ]
+    };
+
+    Scalar.createApiReference(targetElement, config);
+</script>
 </body>
 </html>

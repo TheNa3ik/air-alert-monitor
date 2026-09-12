@@ -40,12 +40,12 @@ public class OpenApiConfig {
                 .addSecuritySchemes("webhookManagementToken", new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
-                        .description("Enter the management token received during webhook registration."))
+                        .description("api.security.webhookManagementToken.desc"))
                 .addSecuritySchemes("webhookSignature", new SecurityScheme()
                         .type(SecurityScheme.Type.APIKEY)
                         .in(SecurityScheme.In.HEADER)
                         .name("X-Signature")
-                        .description("HMAC-SHA256 signature of the raw request body, signed with the subscription's `secret`."))
+                        .description("api.security.webhookSignature.desc"))
                 .addExamples("regionNotFound", errorExample("""
                         {"status":404,"message":"Region not found with regionId: 99","timestamp":"2026-09-11T07:03:07.564Z"}"""))
                 .addExamples("invalidPeriod", errorExample("""
@@ -76,39 +76,22 @@ public class OpenApiConfig {
 
         PathItem alertEventCallback = new PathItem()
                 .post(new Operation()
-                        .summary("Alert event notification")
-                        .description("""
-                                Sent to your subscribed URL whenever a tracked region's alert starts or ends.
-
-                                The request is signed: verify the `X-Signature` header (HMAC-SHA256 of the raw \
-                                body, using the `secret` returned at registration) before trusting the payload.
-
-                                Respond with any 2xx status within a reasonable timeout. Non-2xx responses count \
-                                toward the subscription's consecutive failure count and may auto-disable it.""")
+                        .summary("api.webhook.callback.summary")
+                        .description("api.webhook.callback.desc")
                         .security(List.of(new SecurityRequirement().addList("webhookSignature")))
                         .requestBody(new RequestBody()
                                 .required(true)
                                 .content(new Content().addMediaType("application/json",
                                         new MediaType().schema(new Schema<>().$ref("#/components/schemas/WebhookEventPayload")))))
                         .responses(new ApiResponses()
-                                .addApiResponse("200", new ApiResponse()
-                                        .description("Notification acknowledged. Also accepts any other 2xx status."))
-                                .addApiResponse("5XX", new ApiResponse()
-                                        .description("Treated as a delivery failure. Counts toward the subscription's "
-                                                + "consecutive failure count; the subscription is auto-disabled after "
-                                                + "repeated failures."))
-                                .addApiResponse("default", new ApiResponse()
-                                        .description("Any non-2xx response (including timeouts) is treated as a delivery failure."))));
+                                .addApiResponse("200", new ApiResponse().description("api.webhook.callback.res.200"))
+                                .addApiResponse("5XX", new ApiResponse().description("api.webhook.callback.res.5xx"))
+                                .addApiResponse("default", new ApiResponse().description("api.webhook.callback.res.default"))));
 
         return new OpenAPI()
                 .info(new Info()
                         .title("Air Alert Monitor API")
-                        .description("""
-                                Tracks Ukrainian air raid alert history and stats, built on top of the Ubilling aerial alerts feed.
-
-                                **Data Latency:** Updates are polled every 5 seconds and require 2 confirmations (~10s total latency).
-
-                                **Rate Limiting:** Public access is limited to 60 requests per minute per IP.""")
+                        .description("api.info.desc")
                         .version("v1"))
                 .components(components)
                 .webhooks(Map.of("alertEvent", alertEventCallback));
